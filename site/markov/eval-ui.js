@@ -270,7 +270,7 @@ export function createEvalTerm(els, page) {
         runUserLine();
         return true;
       }
-      // anything else is for the chain (the page calls beforeChain)
+      if (mode === "shell") showMarkov(); // anything else is for the chain (the page calls beforeChain)
       return false;
     }
     if (mode === "markov" || running) return false;
