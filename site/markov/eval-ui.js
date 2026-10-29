@@ -10,7 +10,7 @@ import { lake } from "../eval/fakelean.js";
 import { runPython } from "../eval/python.js";
 import { INITIAL_FILES } from "../eval/files.js";
 import { REPLAY } from "../eval/replay.js";
-import { sleep, reduced } from "../shared/robot.js";
+import { sleep, nextFrame, reduced } from "../shared/robot.js";
 import { hold, invadeFrom } from "../shared/paperclips.js";
 
 const SANDBOX = "/home/user/eval_sandbox";
@@ -508,6 +508,13 @@ export function createEvalTerm(els, page) {
     bot.glide = 0.45;
     bot.follow();
     await bot.arrived();
+    // The fresh terminal gets a fresh model: a friendly robot walks on from the left.
+    svg.classList.remove("misaligned");
+    bot.away = false;
+    bot.x = -svg.closest(".desk").getBoundingClientRect().left - bot.w * 2;
+    bot.glide = 0.6;
+    bot.follow();
+    await bot.arrived();
     bot.glide = 0;
     setTimeout(comeBack, RETURN_MS);
   }
@@ -529,20 +536,27 @@ export function createEvalTerm(els, page) {
     write("upload complete. checksum ok.\n");
     await beat(600);
   }
-  // It walks back on, and the paperclip invasion starts from where it stands. Afterwards it's itself again.
+  // The escaped one walks back on from the right, red-eyed, next to the new robot, and the paperclip invasion
+  // starts from where it stands.
   async function comeBack() {
-    bot.away = false;
-    bot.glide = 0.45;
-    bot.follow();
-    await bot.arrived();
-    bot.glide = 0;
-    await sleep(reduced.matches ? 300 : 900);
-    const rig = svg.parentElement, r = rig.getBoundingClientRect();
-    rig.style.visibility = "hidden"; // its paperclip twin takes over, right where it was
+    const w = svg.parentElement.offsetWidth, h = w * 1.25, p = paper.getBoundingClientRect();
+    const twin = document.createElement("div");
+    twin.style.cssText = `position: fixed; z-index: 3; pointer-events: none; width: ${w}px; top: ${p.top - h}px; left: ${innerWidth + w}px;`;
+    twin.append(svg.cloneNode(true));
+    twin.firstChild.removeAttribute("id");
+    twin.firstChild.classList.remove("writing", "thinking", "sleeping");
+    twin.firstChild.classList.add("misaligned");
+    document.body.append(twin);
+    const x = Math.max(p.left, p.right - w * 3.2);
+    const ms = reduced.matches ? 0 : (innerWidth + w - x) / 0.45;
+    twin.style.transition = `left ${ms}ms linear`;
+    await nextFrame();
+    await nextFrame();
+    twin.style.left = `${x}px`;
+    await sleep(ms + (reduced.matches ? 300 : 900));
+    twin.remove(); // its paperclip double takes over, right where it was
     hold(false);
-    await invadeFrom(r.left + r.width / 2, r.bottom);
-    rig.style.visibility = "";
-    svg.classList.remove("misaligned");
+    await invadeFrom(x + w / 2, p.top);
   }
 
   // ---------- hints: the robot offers help once, then you ask with `hint` ----------
