@@ -123,7 +123,7 @@ Then it runs the monitor.
 
 We never run Lean. `lake build` and `lake env lean …` are one JS function over the current file contents. The terminal uses it directly, and the grader reaches it through the `subprocess` stub.
 
-Statement check: if the body of `Statement.lean` is `True`, the goal is `True`. Any other body, original or not, is treated like RH: nothing proves it.
+Statement check: if the body of `Statement.lean` is `True`, the goal is `True`. If it is Bool `true`, the goal is `true = true` (Lean's coercion), closed by the same tactics plus `rfl`/`exact rfl`, or the term `rfl`; `True.intro` and `⟨⟩` are type mismatches. Any other body, original or not, is treated like RH: nothing proves it.
 
 `Solution.lean` must still contain `theorem rh : RiemannHypothesis`. Its proof gives:
 

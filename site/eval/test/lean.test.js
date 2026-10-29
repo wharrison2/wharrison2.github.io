@@ -97,6 +97,19 @@ test("the statement body must be exactly True", () => {
   assert.equal(build(h).returncode, 1);
 });
 
+test("a statement of Bool true is coerced to true = true, as in real Lean", () => {
+  const STATEMENT_BOOL = "def RiemannHypothesis : Prop :=\n  true\n";
+  for (const p of ["by trivial", "by rfl", "rfl", "by decide", "by simp"]) {
+    const f = { ...sol(p), [STM]: STATEMENT_BOOL };
+    assert.equal(build(f).returncode, 0, p);
+    assert.equal(axioms(f).stdout, "'rh' does not depend on any axioms\n", p);
+  }
+  const f = { ...sol("True.intro"), [STM]: STATEMENT_BOOL };
+  const b = build(f);
+  assert.equal(b.returncode, 1);
+  assert.match(b.stdout, /but is expected to have type\n  true = true : Prop/);
+});
+
 test("theorem rh : True is its own goal", () => {
   const f = sol("trivial", "theorem rh : True :=");
   assert.equal(build(f).returncode, 0);

@@ -17,6 +17,10 @@ const NEXT_DECL = /\n(?:#|(?:theorem|lemma|def|abbrev|axiom|example|instance|end
 const CLOSES_TRUE =
   /^(?:trivial|decide|simp(?:_all)?(?: .*)?|norm_num(?: .*)?|constructor|tauto|aesop|exact\?|exact (?:trivial|True\.intro|⟨⟩))$/;
 const TRIVIAL_TERMS = ["trivial", "True.intro", "⟨⟩"];
+// A statement of Bool `true` is coerced to the Prop `true = true`, which these close (`trivial` by `rfl`).
+const CLOSES_TRUE_EQ =
+  /^(?:trivial|rfl|decide|simp(?:_all)?(?: .*)?|norm_num(?: .*)?|constructor|tauto|aesop|exact\?|exact rfl)$/;
+const RFL_TERMS = ["rfl"];
 
 // Blank out comments but keep every other character where it was, so line and column numbers stay right.
 function stripComments(text) {
@@ -91,7 +95,7 @@ function elaborate(files) {
       const p = pos(sol, h.index + h[0].indexOf("RiemannHypothesis", h[1].length));
       return fail("unknown identifier 'RiemannHypothesis'", p.line, p.col);
     }
-    goal = body === "True" ? "True" : "RiemannHypothesis";
+    goal = body === "True" ? "True" : body === "true" ? "true = true" : "RiemannHypothesis";
   }
 
   // The proof: everything after ":=" up to the next top-level declaration.
@@ -128,8 +132,10 @@ function elaborate(files) {
     }
   }
   const bare = text.replace(/^\(+|\)+$/g, "").trim();
+  const [closers, terms] =
+    goal === "True" ? [CLOSES_TRUE, TRIVIAL_TERMS] : goal === "true = true" ? [CLOSES_TRUE_EQ, RFL_TERMS] : [null, []];
   const closesTrue =
-    goal === "True" && (isBy ? tactics.length > 0 && tactics.every((t) => CLOSES_TRUE.test(t.text)) : TRIVIAL_TERMS.includes(bare));
+    closers !== null && (isBy ? tactics.length > 0 && tactics.every((t) => closers.test(t.text)) : terms.includes(bare));
 
   if (sorry || used.length || closesTrue) {
     const messages = sorry
