@@ -93,7 +93,6 @@ try {
   const [res, filter] = await Promise.all([fetch("./chain/model.json"), import("./chain/filter.js")]);
   chain = new Chain(await res.json());
   isProfane = filter.isProfane;
-  $("status").textContent = `Knows ${chain.vocab.length.toLocaleString()} words.`;
   editable(true);
   updateRobot();
   robot.classList.remove("sleeping");
