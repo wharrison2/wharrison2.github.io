@@ -30,6 +30,7 @@ export async function ramp(ms, fn) {
 //   glide     px/ms: walk to the next spot at this steady speed instead of keeping up with the text; 0 for no walking.
 //   grip      while carrying the cursor: where its stand-in sits in the drawing, {x, y} in viewBox units; else null.
 //   shake     twitch, in px (0 for none); call follow(false) as it changes.
+//   away      true: walks off the right edge of the window (and stays there) instead of anywhere else.
 //   hurry     true skips pauses and letter-by-letter pacing (pause() and type() resolve at once); the page sets it.
 //   tempo     stretches every typing pause (1 for normal).
 //   x, y      where the pencil tip is, relative to the desk.
@@ -59,6 +60,7 @@ export function createRobot({ desk, rig, svg, paper, caret, output, entry }) {
     x: 0, y: 0, tx: 0, ty: 0, w: 60, placed: false, dirty: true, running: false, last: 0,
     aim: null, // a word to hover over instead of writing
     rest: true, // not writing: off to the side
+    away: false, // gone off the right of the window
     glide: 0, // on a long trip: its walking speed in px/ms, instead of a dash
     grip: null, // while handling the cursor: where its stand-in sits in the drawing, {x, y} in viewBox units
     shake: 0, // twitch, in px
@@ -99,7 +101,7 @@ export function createRobot({ desk, rig, svg, paper, caret, output, entry }) {
       else [x, y] = [r.right, r.bottom - r.height * 0.28]; // the end of the word being typed
       // Keep the whole robot inside the window sideways, so narrow phones never scroll sideways.
       const vw = document.documentElement.clientWidth;
-      bot.tx = clamp(x, bot.w * TIP_X, vw - bot.w * (1 - TIP_X) - 2) - d.left;
+      bot.tx = (bot.away ? vw + bot.w * 1.5 : clamp(x, bot.w * TIP_X, vw - bot.w * (1 - TIP_X) - 2)) - d.left;
       bot.ty = y - d.top;
       if (!bot.placed || reduced.matches) [bot.x, bot.y, bot.placed] = [bot.tx, bot.ty, true];
     }

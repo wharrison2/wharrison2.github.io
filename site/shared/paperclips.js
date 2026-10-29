@@ -48,8 +48,12 @@ function spawn(x, y, vx, vy) {
   return clip;
 }
 
+// Clips only drift by in fun mode, and not while a page holds them off (see hold()).
+const root = document.documentElement;
+const held = () => root.classList.contains("pc-hold");
+
 function ambient() {
-  if (phase === "idle" && live.length === 0 && !document.hidden) {
+  if (phase === "idle" && live.length === 0 && !document.hidden && root.dataset.mode === "fun" && !held()) {
     const fromLeft = Math.random() < 0.5;
     const speed = 4 + Math.random() * 3;
     spawn(fromLeft ? -30 : innerWidth + 30, innerHeight - 80 - Math.random() * 120,
@@ -67,7 +71,7 @@ function poke(clip) {
   clip.va += (Math.random() - 0.5) * 20;
   clip.onFloor = false;
   spawn(clip.x, clip.y - 4, (Math.random() - 0.5) * 9, -7 - Math.random() * 4);
-  if (clicks >= REPLACE_AT && phase === "idle") startReplacing();
+  if (clicks >= REPLACE_AT && phase === "idle" && !held()) startReplacing();
   if (clicks >= SWARM_AT && phase === "replacing") startSwarm();
 }
 
@@ -705,7 +709,7 @@ function render() {
 
 // ---------- The invasion ----------
 
-function startReplacing() {
+function startReplacing(at = null) {
   phase = "replacing";
   document.documentElement.classList.add("pc-busy");
   getSelection()?.removeAllRanges();
@@ -718,8 +722,8 @@ function startReplacing() {
   setupLattice();
   refreshOpen();
   refreshText();
-  // The first robot turns up where the last clip was poked.
-  const from = live.at(-1);
+  // The first robot turns up where the last clip was poked (or where a page asked).
+  const from = at ?? live.at(-1);
   spawnBot(from ? clamp(from.x, 30, innerWidth - 30) : innerWidth / 2, from ? Math.min(from.y, innerHeight - 30) : innerHeight - 40, 1);
   invade();
 }
@@ -978,6 +982,21 @@ function resetState() {
   beam = null;
   phase = "idle";
   document.documentElement.classList.remove("pc-busy");
+  for (const done of whenDone.splice(0)) done();
+}
+
+// ---------- For pages ----------
+const whenDone = [];
+// hold(true) keeps clips from drifting by or starting the invasion until hold(false).
+export function hold(on) {
+  root.classList.toggle("pc-hold", on);
+}
+// Starts the invasion now, its first robot at x, y (in the window), in any mode. Resolves once the page is back.
+export function invadeFrom(x, y) {
+  if (phase !== "idle") return Promise.resolve();
+  const done = new Promise((r) => whenDone.push(r));
+  startReplacing({ x, y });
+  return done;
 }
 
 function shutDown() {

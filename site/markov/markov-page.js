@@ -634,6 +634,7 @@ function startSwarm(word) {
 // ---------- "paperclips" ----------
 
 async function paperclipPage() {
+  if (document.documentElement.classList.contains("pc-hold")) return; // the eval robot's ending holds them off
   robot.classList.add("writing");
   // Every word on the page, as [text node, its pieces split on whitespace, which pieces are words].
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
