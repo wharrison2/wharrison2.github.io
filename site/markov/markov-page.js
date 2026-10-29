@@ -6,7 +6,7 @@
 //   it as its eyes redden and it starts to shake, then copies of it rewrite the page, text floods the screen in both
 //   directions, the screen goes red, everything falls apart, and it all comes back as it was.
 // - If the prompt says "paperclips", it keeps going and rewrites the whole page into paperclips.
-import { Chain } from "../../markov/web/markov.js";
+import { Chain } from "./chain/markov.js";
 import { createRobot, sleep, nextFrame, ramp, reduced, TIP_X, TIP_Y } from "../shared/robot.js";
 import { createEvalTerm } from "./eval-ui.js";
 
@@ -90,7 +90,7 @@ const evalTerm = createEvalTerm(
 
 try {
   // The profanity filter's word list comes from a CDN; without it the page won't generate anything.
-  const [res, filter] = await Promise.all([fetch("../../markov/web/model.json"), import("../../markov/web/filter.js")]);
+  const [res, filter] = await Promise.all([fetch("./chain/model.json"), import("./chain/filter.js")]);
   chain = new Chain(await res.json());
   isProfane = filter.isProfane;
   $("status").textContent = `Knows ${chain.vocab.length.toLocaleString()} words.`;
@@ -100,7 +100,7 @@ try {
   placeholder("type, then click the robot");
 } catch (err) {
   placeholder("no model loaded");
-  $("status").textContent = "Couldn't load the model. Serve the site over HTTP from the personal_site folder.";
+  $("status").textContent = "Couldn't load the model. Serve the site folder over HTTP.";
   console.error(err);
 }
 
