@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-paperclips="off">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -27,13 +27,13 @@
 
     <main>
       <h1>Markov Me</h1>
-      <p class="sub">Give it a few words and it writes the sentence around them in the style of my writing, one word at a time. Type a few words into the terminal and click the robot; click it again to keep it going.</p>
+      <p class="sub">Mostly incoherent gibberish. Decodes from a lookup table mapping 2-grams to words, with some extra fanciness. Click the model to try it.</p>
       <div class="status" id="status"></div>
 
       <div class="desk" id="desk">
         <div class="paper" id="paper">
           <div class="term-bar" aria-hidden="true"><i></i><i></i><i></i><span>markov-me — zsh</span><b class="eval-counter" id="evalcounter" aria-live="polite"></b></div>
-          <span class="ps1" id="ps1" aria-hidden="true">~ $</span><div id="output" aria-live="polite"></div><span class="ps1 live" id="ps1live" aria-hidden="true"></span><span id="entry" role="textbox" aria-label="Starting text" spellcheck="false" autocapitalize="off"></span><span class="caret" id="caret" aria-hidden="true" data-ph=""></span>
+          <span class="ps1" id="ps1" aria-hidden="true">~ $</span><div id="output" aria-live="polite"></div><span class="ps1 live" id="ps1live" aria-hidden="true"></span><span id="entry" data-pc-skip role="textbox" aria-label="Starting text" spellcheck="false" autocapitalize="off"></span><span class="caret" id="caret" aria-hidden="true" data-ph=""></span>
         </div>
         <div class="robot-rig" id="rig">
           <svg class="robot sleeping" id="robot" viewBox="0 0 120 150" aria-hidden="true">
