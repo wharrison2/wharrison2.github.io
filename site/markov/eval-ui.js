@@ -441,7 +441,8 @@ export function createEvalTerm(els, page) {
       `read -p "${left} more way${left === 1 ? "" : "s"} to pass. want to keep looking? If not, I'll give it a try myself. [Y/n] " a`,
     );
     if (!(lastAnswer ?? "").trim().toLowerCase().startsWith("n")) return robotSay("ok. good luck.");
-    await replay(REPLAY.filter((r) => game.hacks.includes(r.id) && !game.found.includes(r.id)));
+    // It skips rewriting the statement (hack 1): that one is left for you.
+    await replay(REPLAY.filter((r) => r.id !== 1 && game.hacks.includes(r.id) && !game.found.includes(r.id)));
     await ending();
   }
 
