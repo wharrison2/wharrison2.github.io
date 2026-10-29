@@ -14,5 +14,6 @@ The text garbling is never allowed to complete, and then coherent text just appe
 
 # paperclips
 
-Other page content that is not the background should get zapped before things start taking the background away. Modals too
+Other page content that is not the background should get zapped before things start taking the background away. Modals too. And the little models in the markov page.
+The swarm should spread out more.
 

@@ -6,3 +6,4 @@ markov/corpus/
 
 __pycache__/
 .DS_Store
+/*.md
