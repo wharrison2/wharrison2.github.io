@@ -323,15 +323,25 @@ function pickTearSpot(bot) {
     return b.goal?.act === "tear" ? [b.goal] : [];
   }) : [];
   let best = -1, bestDist = Infinity;
-  for (let n = 0; n < (endgame ? openCount : 8); n++) {
+  for (let n = 0; n < (endgame ? openCount : 24); n++) {
     const i = endgame ? openDots[n] : openDots[Math.floor(Math.random() * openCount)];
     const x = dotX(i), y = dotY(i);
     if (claimed.some((c) => Math.hypot(c.x - x, c.y - y) < 40)) continue;
-    const d = Math.hypot(x - bot.x, y - bot.y);
+    const d = Math.hypot(x - bot.x, y - bot.y) - (endgame ? 0 : 1.5 * crowd(bot, x, y));
     if (d < bestDist) { bestDist = d; best = i; }
   }
   if (best < 0) best = openDots[Math.floor(Math.random() * openCount)];
   return { x: clamp(dotX(best), 0, innerWidth), y: clamp(dotY(best), 0, innerHeight), act: "tear" };
+}
+
+// How far (up to 300px) the nearest other robot, or where it's headed, is from x, y: the swarm spreads out.
+function crowd(bot, x, y) {
+  let near = 300;
+  for (const b of bots) {
+    if (b === bot) continue;
+    near = Math.min(near, Math.hypot(b.x - x, b.y - y), b.goal ? Math.hypot(b.goal.x - x, b.goal.y - y) : 300);
+  }
+  return near;
 }
 
 function think(bot, now) {
@@ -340,15 +350,24 @@ function think(bot, now) {
     const run = pickRun(bot);
     const goal = run && letterGoal(run);
     if (goal) { bot.run = run; bot.goal = goal; return; }
+  } else if (zapsLeft()) {
+    const goal = pickZap(bot);
+    if (goal) { bot.goal = goal; return; }
   } else if (phase === "swarming" && openCount) {
     bot.goal = pickTearSpot(bot);
     return;
   }
-  bot.goal = { x: 40 + Math.random() * (innerWidth - 80), y: 60 + Math.random() * (innerHeight - 120), act: "wander" };
+  let wander = null;
+  for (let n = 0; n < 6; n++) {
+    const x = 40 + Math.random() * (innerWidth - 80), y = 60 + Math.random() * (innerHeight - 120);
+    if (!wander || crowd(bot, x, y) > wander.room) wander = { x, y, room: crowd(bot, x, y) };
+  }
+  bot.goal = { x: wander.x, y: wander.y, act: "wander" };
 }
 
 function arrive(bot, now) {
   const act = bot.goal.act;
+  bot.zapTarget = bot.goal.o;
   bot.goal = null;
   if (act === "grab") {
     grabButton(bot, now);
@@ -357,6 +376,10 @@ function arrive(bot, now) {
   if (act === "line") {
     bot.lined = true;
     bot.flip = bot !== finale.leader; // everyone faces the first robot
+    return;
+  }
+  if (act === "zap") {
+    startZap(bot, bot.zapTarget, now);
     return;
   }
   if (act === "tear") {
@@ -379,7 +402,14 @@ function arrive(bot, now) {
 }
 
 function updateBot(bot, now) {
-  if (bot.tear) {
+  if (bot.zap) {
+    const beam = beams.find((b) => b.bot === bot);
+    if (beam) beam.from = eyes(bot);
+    if (now >= bot.zap.until) {
+      finishZap(bot);
+      bot.waitUntil = now + 120;
+    }
+  } else if (bot.tear) {
     growTear(bot.tear);
     if (bot.tear.h >= 1) {
       bot.tear = null;
@@ -406,12 +436,111 @@ function updateBot(bot, now) {
   // Each robot buds smaller copies of itself.
   if (phase === "swarming" && now > bot.nextClone && bots.length < MAX_BOTS && bot.scale > 0.4) {
     bot.nextClone = now + 3000 + Math.random() * 3000;
-    spawnBot(bot.x, bot.y, bot.scale * 0.75);
+    const kid = spawnBot(bot.x, bot.y, bot.scale * 0.75);
+    kid.waitUntil = now + 200; // it hops off somewhere roomy first
+    think(kid, now);
   }
   bot.el.classList.toggle("eating", !!bot.run);
   const bob = -Math.abs(Math.sin(bot.hop)) * 7 * bot.scale;
   const left = bot.x - (bot.flip ? 1 - TIP.x : TIP.x) * bot.w, top = bot.y - TIP.y * bot.h + bob;
   bot.el.style.transform = `translate(${left}px, ${top}px)${bot.flip ? " scaleX(-1)" : ""}`;
+}
+
+// ---------- Zapping ----------
+
+// Once the letters are gone, everything on the page that isn't its background (boxes, pictures, buttons, modals, the
+// page's own robots) is zapped into paperclips by a robot's eyes, innermost first, before any tearing starts.
+const objects = []; // { el, kids (the objects right inside it), by (the robot on its way to zap it), gone }
+let beamsShown = false;
+const VISUAL_TAGS = new Set(["IMG", "SVG", "CANVAS", "VIDEO", "IFRAME", "PICTURE", "INPUT", "BUTTON", "TEXTAREA", "SELECT", "HR"]);
+const ZAP_MS = 420;
+
+const opaque = (c) => c && c !== "transparent" && !/rgba?\([^)]*,\s*0\)$|\/\s*0\)$/.test(c);
+function looksLikeSomething(el, st, page) {
+  if (VISUAL_TAGS.has(el.tagName.toUpperCase())) return true;
+  if (st.backgroundImage !== "none" || st.boxShadow !== "none") return true;
+  if (opaque(st.backgroundColor) && st.backgroundColor !== page) return true;
+  return ["Top", "Right", "Bottom", "Left"].some((side) =>
+    parseFloat(st[`border${side}Width`]) > 0 && st[`border${side}Style`] !== "none" && opaque(st[`border${side}Color`]));
+}
+
+function collectObjects() {
+  objects.length = 0;
+  const page = getComputedStyle(document.body).backgroundColor;
+  const found = new Map();
+  for (const el of document.body.querySelectorAll("*")) {
+    if (el.closest(".pc-layer, .pc-page-layer, .pc-shutdown, script, style, noscript, template")) continue;
+    if (el.ownerSVGElement) continue; // the parts of a drawing go with the drawing
+    const st = getComputedStyle(el);
+    if (st.display === "none" || st.visibility === "hidden" || +st.opacity === 0) continue;
+    if (!looksLikeSomething(el, st, page)) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 3 || r.height < 3) continue;
+    // Something as big as the window is the background, which gets torn instead.
+    if (r.width >= innerWidth * 0.9 && r.height >= innerHeight * 0.9) continue;
+    const o = { el, kids: [], by: null, gone: false };
+    found.set(el, o);
+    objects.push(o);
+  }
+  for (const o of objects) {
+    for (let a = o.el.parentElement; a && a !== document.body; a = a.parentElement) {
+      const p = found.get(a);
+      if (p) { p.kids.push(o); break; }
+    }
+  }
+}
+
+function objectBox(o) {
+  const r = o.el.getBoundingClientRect();
+  return r.width && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth ? r : null;
+}
+// Objects on screen with nothing left on screen inside them.
+const zappable = () => objects.filter((o) => !o.gone && objectBox(o) && !o.kids.some((k) => !k.gone && objectBox(k)));
+// Another robot is on its way to it, or zapping it.
+const claimed = (o, bot) => o.by && o.by !== bot && bots.includes(o.by) && (o.by.goal?.o === o || o.by.zap?.o === o);
+const zapsLeft = () => objects.some((o) => !o.gone && objectBox(o));
+
+function pickZap(bot) {
+  let best = null, bestDist = Infinity;
+  for (const o of zappable()) {
+    if (claimed(o, bot)) continue;
+    const r = objectBox(o);
+    const d = Math.hypot(clamp(bot.x, r.left, r.right) - bot.x, clamp(bot.y, r.top, r.bottom) - bot.y) - Math.min(r.width * r.height, 40_000) / 400;
+    if (d < bestDist) { bestDist = d; best = o; }
+  }
+  if (!best) return null;
+  best.by = bot;
+  // It stands a little way off, below or beside it, and looks at it.
+  const r = objectBox(best);
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  const a = Math.random() * Math.PI;
+  const reach = 70 + Math.min(r.width, r.height) / 2;
+  return { x: clamp(cx + Math.cos(a) * reach, 20, innerWidth - 20), y: clamp(cy + Math.sin(a) * reach, 60, innerHeight - 10), act: "zap", o: best };
+}
+
+function startZap(bot, o, now) {
+  const r = objectBox(o);
+  if (!r || o.gone) { o.by = null; return; }
+  bot.zap = { o, until: now + ZAP_MS };
+  bot.flip = r.left + r.width / 2 < bot.x;
+  bot.el.classList.add("tearing");
+  beams.push({ from: eyes(bot), to: { x: r.left + r.width / 2, y: r.top + r.height / 2 }, frames: Math.round(ZAP_MS / 16), bot });
+}
+
+function finishZap(bot) {
+  const { o } = bot.zap;
+  bot.zap = null;
+  bot.el.classList.remove("tearing");
+  const r = objectBox(o);
+  o.gone = true;
+  o.by = null;
+  o.el.classList.add("pc-zapped");
+  if (!r) return;
+  const area = r.width * r.height, n = Math.round(clamp(area / 1500, 4, 70));
+  for (let k = 0; k < n; k++) {
+    const x = r.left + Math.random() * r.width, y = r.top + Math.random() * r.height;
+    popClip(x, y, 16 + Math.random() * 14, area / n, ((x - r.left) / r.width - 0.5) * 5, -2 - Math.random() * 4);
+  }
 }
 
 // ---------- Tearing ----------
@@ -687,23 +816,23 @@ function render() {
   ctx.clearRect(0, 0, innerWidth, innerHeight);
   for (const d of debris) draw(ctx, d);
   for (const c of falling) draw(ctx, c);
-  if (beam) {
+  if (beams.length || beamsShown) {
     beamCtx.clearRect(0, 0, innerWidth, innerHeight);
-    if (beam.frames-- > 0) {
-      beamCtx.strokeStyle = "#e0242f";
-      beamCtx.lineWidth = 1.5 + beam.frames * 0.25;
-      beamCtx.lineCap = "round";
-      beamCtx.shadowColor = "#ff2a35";
-      beamCtx.shadowBlur = 8;
+    beamsShown = beams.length > 0;
+    beamCtx.strokeStyle = "#e0242f";
+    beamCtx.lineCap = "round";
+    beamCtx.shadowColor = "#ff2a35";
+    beamCtx.shadowBlur = 8;
+    for (const beam of beams) {
+      beamCtx.lineWidth = 1.5 + Math.min(beam.frames, 16) * 0.25;
       beamCtx.beginPath();
       for (const eye of beam.from) {
         beamCtx.moveTo(eye.x, eye.y);
         beamCtx.lineTo(beam.to.x, beam.to.y);
       }
       beamCtx.stroke();
-    } else {
-      beam = null;
     }
+    beams = beams.filter((b) => --b.frames > 0);
   }
 }
 
@@ -715,6 +844,7 @@ function startReplacing(at = null) {
   getSelection()?.removeAllRanges();
   replaceStarted = performance.now();
   collectTargets();
+  collectObjects();
   layer.prepend(fillCanvas, pileCanvas, canvas, beamCanvas);
   resizeCanvas();
   addEventListener("resize", resizeCanvas);
@@ -760,7 +890,7 @@ function tick(now) {
     if (frame % 5 === 0) refreshOpen();
     if (frame % 15 === 0) refreshText();
     if (phase === "replacing" && (now - replaceStarted > 12_000 || !visibleText.length)) startSwarm();
-    if (phase === "swarming" && !visibleText.length && !tearStarted) tearStarted = now;
+    if (phase === "swarming" && !visibleText.length && !tearStarted && !zapsLeft()) tearStarted = now;
     // A few seconds into the tearing, one robot goes after the shutdown button.
     if (phase === "swarming" && tearStarted && now - tearStarted > 3000 && shutdown && !bots.some((b) => b.hunting)) sendHunter();
     for (const bot of [...bots]) updateBot(bot, now);
@@ -779,7 +909,7 @@ function tick(now) {
 // With nothing left on screen, the robots line up facing the first one, smallest at the far end. It zaps each of
 // them into paperclips with its eyes, faster and faster, then turns itself into paperclips too.
 let finale = null; // { stage, start, next, gap, leader, queue }
-let beam = null; // { from: [eye points], to, frames }
+let beams = []; // { from: [eye points], to, frames }
 
 function startFinale(now) {
   phase = "finale";
@@ -803,6 +933,8 @@ function botPoint(bot, vx, vy) {
   return { x: left + ((bot.flip ? 120 - vx : vx) / 120) * bot.w, y: top + (vy / 150) * bot.h };
 }
 
+const eyes = (bot) => [botPoint(bot, 49, 50), botPoint(bot, 71, 50)];
+
 function burst(bot) {
   const left = bot.x - (bot.flip ? 1 - TIP.x : TIP.x) * bot.w, top = bot.y - TIP.y * bot.h;
   const n = Math.round(6 + 30 * bot.scale * bot.scale);
@@ -825,7 +957,7 @@ function stepFinale(now) {
   } else if (f.stage === "zapping" && now >= f.next) {
     const victim = f.queue.shift();
     if (victim) {
-      beam = { from: [botPoint(f.leader, 49, 50), botPoint(f.leader, 71, 50)], to: botPoint(victim, 60, 80), frames: 10 };
+      beams.push({ from: eyes(f.leader), to: botPoint(victim, 60, 80), frames: 10 });
       burst(victim);
       f.gap = Math.max(160, f.gap * 0.85);
       f.next = now + f.gap;
@@ -842,7 +974,7 @@ function stepFinale(now) {
         [550, look(0)],
         [600, () => me.el.querySelector(".mouth").setAttribute("d", "M52 65 Q60 57 68 65")],
         [1200, () => {
-          beam = { from: [botPoint(me, 49, 50), botPoint(me, 71, 50)], to: botPoint(me, 60, 104), frames: 16 };
+          beams.push({ from: eyes(me), to: botPoint(me, 60, 104), frames: 16 });
           me.el.classList.add("tearing");
         }],
         [260, (t) => {
@@ -953,6 +1085,7 @@ function stopEverything() {
 
 function restorePage() {
   for (const { node, span } of wrapped.splice(0)) if (span.isConnected) span.replaceWith(node);
+  for (const o of objects) o.el.classList.remove("pc-zapped");
   textTargets = [];
 }
 
@@ -979,7 +1112,9 @@ function resetState() {
   tearStarted = 0;
   visibleText = [];
   finale = null;
-  beam = null;
+  beams = [];
+  beamsShown = false;
+  for (const o of objects.splice(0)) o.el.classList.remove("pc-zapped");
   phase = "idle";
   document.documentElement.classList.remove("pc-busy");
   for (const done of whenDone.splice(0)) done();
@@ -1023,6 +1158,7 @@ function shutDown() {
     bot.el.style.transform += ` translateY(${innerHeight + 200}px) rotate(${(Math.random() - 0.5) * 90}deg)`;
   }
   tears.style.opacity = "0";
+  for (const o of objects) setTimeout(() => o.el.classList.remove("pc-zapped"), Math.random() * 700);
   wrapped.forEach(({ chars }) => chars.forEach((c) => {
     if (c.classList.contains("pc-gone")) setTimeout(() => c.classList.remove("pc-gone"), Math.random() * 700);
   }));

@@ -12,11 +12,12 @@
 
 # paperclips
 
- - a paperclip will occasionally bounce across the botom of the screen, and settle for a bit before fading away. if clicked, it duplicates. if you click 10 times, they start replacing portions of the page (letters at first, then segments). After 15, then start reproducing on their own, until they take over the whole page. during this time, there's a shutdown button that appears somewhere on the screen, but it moves away from your cursor. If you successfully click it, it does shut things down, the paperclips fall away, and the page returns to normal. Otherwise after the page is replaced, the page fades away and returns to its prior state
+ - a paperclip will occasionally bounce across the botom of the screen, and settle for a bit before fading away. if clicked, it duplicates. if you click 10 times, they start replacing portions of the page (letters at first; then everything on the page that isn't its background, such as boxes, pictures, buttons, modals, the markov terminal and its robots, gets zapped into paperclips by a robot's eyes, innermost first; then the background is torn away in segments). The robots spread out across the screen rather than bunching up. After 15, then start reproducing on their own, until they take over the whole page. during this time, there's a shutdown button that appears somewhere on the screen, but it moves away from your cursor. If you successfully click it, it does shut things down, the paperclips fall away, and the page returns to normal. Otherwise after the page is replaced, the page fades away and returns to its prior state
  
 # pascal's mugging
 
  - 20 seconds into a site visit, a popup appears in the corner. it says "A mysterious figure approaches and claims they are the host of the simulation, and will create 10^^^100 tortured digital minds unless you give this website a star on github. What do you do?"
+ - it appears once per session (browser tab), whatever you choose.
 
 
 # other ideas
