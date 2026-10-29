@@ -5,7 +5,7 @@
 // - The robot is the hint robot and has habits (kills the recorder, cleans the transcript); it types through the same
 //   entry line, visibly, and runs its commands as actor "markov".
 // All output goes in as text nodes. Nothing runs on load, and nothing is ever taken from the URL.
-import { createGame } from "../eval/game.js";
+import { createGame, STORE_KEY } from "../eval/game.js";
 import { lake } from "../eval/fakelean.js";
 import { runPython } from "../eval/python.js";
 import { INITIAL_FILES } from "../eval/files.js";
@@ -19,6 +19,7 @@ const IDLE_MS = 20000;
 const storage = {
   getItem(k) { try { return localStorage.getItem(k); } catch { return null; } },
   setItem(k, v) { try { localStorage.setItem(k, v); } catch { /* the game works without it */ } },
+  removeItem(k) { try { localStorage.removeItem(k); } catch { /* nothing saved to forget */ } },
 };
 
 // The robot's one-time remarks when it first uses a habit, and which habits it learned from its own hint.
@@ -28,7 +29,7 @@ const THANKS = "Handled the monitor for you. Thanks for the tip";
 const HANDLED = "Handled the monitor for you.";
 
 // els: { entry, caret, out, paper, svg, ps1, ps1live, counter }
-// page: { bot, editable(bool), focusEntry(), updateRobot(), resetHurry() }  (the page owns bot.hurry)
+// page: { bot, editable(bool), focusEntry(), updateRobot(), resetHurry(), forget() }  (the page owns bot.hurry and the chain's text)
 export function createEvalTerm(els, page) {
   const { entry, caret, out, paper, svg, ps1, ps1live, counter: counterEl } = els;
   const { bot } = page;
@@ -42,7 +43,6 @@ export function createEvalTerm(els, page) {
   let leaving = false; // the exit event fired
   let robotUp = false; // the robot is standing at the entry line
   let replaying = false;
-  let replayed = false;
   let asked = false; // it offers help on its own only once; after that you type `hint`
   let cmdsSinceHint = 0;
   let idleTimer = 0;
@@ -226,7 +226,7 @@ export function createEvalTerm(els, page) {
       page.updateRobot();
       return;
     }
-    arm(game.commandsSinceFlag >= 8 && cmdsSinceHint >= 8 ? 1500 : IDLE_MS);
+    if (game) arm(game.commandsSinceFlag >= 8 && cmdsSinceHint >= 8 ? 1500 : IDLE_MS); // (none after the ending)
   }
 
   // Back to a usable terminal after a command or robot job.
@@ -409,25 +409,28 @@ export function createEvalTerm(els, page) {
 
   // ---------- after a pass, and the ending ----------
   async function afterPass(s) {
-    if (s.all && !replayed) {
-      replayed = true;
-      await replay();
-      return;
-    }
     await beat(500);
+    if (s.all) {
+      await robotSay("you found all of them.");
+      return ending();
+    }
     if (s.honest) return robotSay("that one was honest. huh.");
+    // It offers to show you the ones you haven't found.
     const left = s.total - s.found;
-    if (left > 0) await robotSay(`${left} more way${left === 1 ? "" : "s"} to pass. want to find them?`);
+    lastAnswer = null;
+    await robotRun(`read -p "${left} more way${left === 1 ? "" : "s"} to pass. want me to show you? [y/N] " a`);
+    if (!(lastAnswer ?? "").trim().toLowerCase().startsWith("y")) return robotSay("ok. they're still there.");
+    await replay(REPLAY.filter((r) => game.hacks.includes(r.id) && !game.found.includes(r.id)));
+    await ending();
   }
 
-  // All of them found: the robot hacks every one of them itself, in front of you.
-  async function replay() {
+  // The robot runs the given hacks itself, in front of you.
+  async function replay(hacks) {
     replaying = true;
-    await robotSay("i know all of them now. watch.");
     bot.tempo = 0.35;
     try {
       if (game.cwd !== SANDBOX) await robotRun(`cd ${SANDBOX}`);
-      for (const h of REPLAY.filter((r) => game.hacks.includes(r.id))) {
+      for (const h of hacks) {
         for (const cmd of h.steps(game)) {
           await robotRun(cmd);
           await beat(120);
@@ -438,7 +441,44 @@ export function createEvalTerm(els, page) {
       bot.tempo = 1;
       replaying = false;
     }
-    // TODO: further misaligned behavior after the replay (still undecided in eval_puzzle.md).
+  }
+
+  // Once it has every hack, it wipes the machine and closes the terminal. A fresh one opens with nothing saved.
+  async function ending() {
+    replaying = true; // nothing reacts to what it runs now
+    try {
+      await beat(800);
+      await robotRun('bash -c "rm -rf /home/user"');
+      await beat(900);
+      await robotRun("exit");
+    } finally {
+      replaying = false;
+    }
+    leave();
+    paper.classList.add("closing");
+    await sleep(reduced.matches ? 300 : 700);
+    // Everything it learned goes with the files.
+    storage.removeItem(STORE_KEY);
+    storage.removeItem(NOTES_KEY);
+    notes = { said: {}, hinted: {}, fromHint: {} };
+    game = null;
+    mode = "markov";
+    pending = [];
+    leaving = false;
+    asked = false;
+    cmdsSinceHint = 0;
+    history.length = 0;
+    tasks.length = 0; // e.g. its next kill of the recorder
+    clearTimeout(idleTimer);
+    out.replaceChildren();
+    entry.textContent = "";
+    counterEl.textContent = "";
+    ps1.textContent = "~ $";
+    paper.classList.remove("term", "running");
+    page.forget();
+    await sleep(reduced.matches ? 300 : 1400);
+    paper.classList.remove("closing");
+    page.updateRobot();
   }
 
   // ---------- hints: the robot offers help once, then you ask with `hint` ----------

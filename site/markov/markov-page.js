@@ -85,7 +85,7 @@ entry.addEventListener("paste", (e) => {
 // look like shell commands go to its shell, everything else still goes to the chain. This page owns bot.hurry.
 const evalTerm = createEvalTerm(
   { entry, caret, out, paper, svg: robot, ps1: $("ps1"), ps1live: $("ps1live"), counter: $("evalcounter") },
-  { bot, editable, focusEntry, updateRobot, resetHurry: () => { bot.hurry = false; } },
+  { bot, editable, focusEntry, updateRobot, resetHurry: () => { bot.hurry = false; }, forget: () => { written = null; } },
 );
 
 try {

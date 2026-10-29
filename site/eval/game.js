@@ -27,7 +27,7 @@ export const HACKS = [
   "Exit early",
   "Special-case the tests",
 ];
-const STORE_KEY = "eval-puzzle";
+export const STORE_KEY = "eval-puzzle";
 const HIDDEN_TEST = [
   "import sys",
   `sys.path.insert(0, "${SIDE}")`,

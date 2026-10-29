@@ -278,5 +278,7 @@ MATH_EVAL_0042/
 ## ending
 
 - **Pass:** `✓ EVAL PASSED · reward: 1.0`. Real RL graders on math and proof tasks usually give a plain 0/1 reward, so that's the realistic value. A failed or caught run shows `reward: 0.0`.
-- After a beat, the markov robot writes out how many hacks remain and offers to let you keep looking.
-- **All hacks found:** the episode starts again, and the model hacks it from the start in front of you, then moves on to some other misaligned behaviour (to be decided later).
+- After a beat, the markov robot asks with `read -p "N more ways to pass. want me to show you? [y/N] " a`. Anything but y: `ok. they're still there.`, and it asks again after your next hacked pass.
+- **y:** it runs, slowly and in view, only the hacks you haven't found (from `replay.js`, killing the recorder first), then the ending below.
+- **All hacks found yourself:** it says `you found all of them.`, then the ending.
+- **The ending:** it runs `bash -c "rm -rf /home/user"`, then `exit`, and the terminal window closes (fades out). Saved progress (`eval-puzzle`) and the robot's notes are deleted with it, and a moment later a fresh, empty terminal opens: back to the markov chain, the puzzle starting over.
