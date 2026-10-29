@@ -1,0 +1,26 @@
+/* Version 3, "Pinboard": blush paper, deep berry ink, a teal accent, sticky-note colors. */
+@import url("https://fonts.googleapis.com/css2?family=Young+Serif&family=Work+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Patrick+Hand&family=DM+Mono&display=swap");
+
+:root {
+  --bg: #f3e5e0; --surface: #fffaf7; --fg: #36202c; --muted: #6e5460; --line: #e2cbc3;
+  --accent: #23657f; --accent-fg: #ffffff;
+  --note-yellow: #f6dc78; --note-mint: #c3e3d2; --note-lilac: #dcd3f3; --note-ink: #2e1d25;
+  --tape: rgb(255 255 255 / 0.55);
+  --radius: 14px;
+  --font-display: "Young Serif", Georgia, serif;
+  --font-body: "Work Sans", system-ui, sans-serif;
+  --font-hand: "Patrick Hand", cursive;
+  --font-mono: "DM Mono", ui-monospace, monospace;
+  --display-weight: 400;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #231a1f; --surface: #2e2329; --fg: #f3e7eb; --muted: #baa4ae; --line: #46353d;
+    --accent: #84c6e0; --accent-fg: #0f2530;
+    --note-yellow: #d9c062; --note-mint: #a6c9b6; --note-lilac: #bcb2d8;
+    --tape: rgb(255 255 255 / 0.18);
+    color-scheme: dark;
+  }
+}
+body { background: var(--bg); color: var(--fg); }

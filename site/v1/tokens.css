@@ -1,0 +1,21 @@
+/* Version 1, "Index": cool gray paper, ink navy, a plum accent. Serif for reading, mono for dates. */
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+:root {
+  --bg: #eceff3; --surface: #f8f9fb; --fg: #1e2230; --muted: #5b6272; --line: #cdd2db;
+  --accent: #8a2f55; --accent-fg: #ffffff; --mark: #f3dc7a;
+  --radius: 4px;
+  --font-display: "Newsreader", Georgia, serif;
+  --font-body: "Newsreader", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --display-weight: 500;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161a22; --surface: #1e232d; --fg: #e3e6ec; --muted: #9aa1b1; --line: #2e3442;
+    --accent: #e48fb2; --accent-fg: #1a0f14; --mark: #6b5a1f;
+    color-scheme: dark;
+  }
+}
+body { background: var(--bg); color: var(--fg); }

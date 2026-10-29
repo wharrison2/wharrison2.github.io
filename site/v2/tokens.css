@@ -1,0 +1,22 @@
+/* Version 2, "Margins": sage paper, aubergine ink, a brick accent. A display serif over a very legible sans. */
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Caveat:wght@500&family=JetBrains+Mono:wght@400&display=swap");
+
+:root {
+  --bg: #e4e9df; --surface: #f1f4ee; --fg: #2c2836; --muted: #5f5a6b; --line: #c6cebf;
+  --accent: #a2432a; --accent-fg: #ffffff; --tint: #d5ddcf;
+  --radius: 10px;
+  --font-display: "Instrument Serif", Georgia, serif;
+  --font-body: "Atkinson Hyperlegible", system-ui, sans-serif;
+  --font-hand: "Caveat", cursive;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --display-weight: 400;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1e19; --surface: #232821; --fg: #e7e4ec; --muted: #a29dac; --line: #343b32;
+    --accent: #e8906f; --accent-fg: #22140e; --tint: #283026;
+    color-scheme: dark;
+  }
+}
+body { background: var(--bg); color: var(--fg); }

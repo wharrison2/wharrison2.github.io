@@ -1,0 +1,70 @@
+* { box-sizing: border-box; }
+body { margin: 0; font: 17px/1.65 var(--font-body); }
+a { color: inherit; text-decoration-color: color-mix(in srgb, var(--accent) 60%, transparent); text-underline-offset: 3px; }
+a:hover { color: var(--accent); }
+
+/* One reading column; notes hang in the right margin when there's room. */
+.wrap { max-width: 640px; margin: 0 auto; padding: 0 16px; position: relative; }
+@media (min-width: 1100px) { .wrap { transform: translateX(-120px); } }
+
+.top { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 28px 0 0; flex-wrap: wrap; }
+.top .home { font: 400 1.35rem/1 var(--font-display); text-decoration: none; }
+.top nav { display: flex; gap: 18px; font-size: 0.92rem; }
+.top nav a { text-decoration: none; color: var(--muted); }
+.top nav a:hover, .top nav a[aria-current] { color: var(--accent); }
+
+.hello { padding: 96px 0 24px; }
+.hello h1 { font: 400 clamp(3rem, 9vw, 5.2rem)/0.95 var(--font-display); letter-spacing: -0.02em; margin: 0 0 32px; }
+.hello h1 em { color: var(--accent); }
+.lede { font-size: 1.2rem; line-height: 1.6; }
+
+/* Sidenotes */
+.has-note { position: relative; }
+.ref { font: 0.7rem var(--font-mono); color: var(--accent); vertical-align: super; line-height: 0; }
+.note {
+  font-size: 0.85rem; line-height: 1.5; color: var(--muted);
+  display: block; margin: 10px 0 14px; padding-left: 12px; border-left: 2px solid var(--line);
+}
+.note .ref { margin-right: 4px; }
+@media (min-width: 1100px) {
+  .note {
+    position: absolute; top: 0.3em; left: calc(100% + 40px); width: 230px; margin: 0; padding: 0; border: 0;
+  }
+}
+
+h2 { font: italic 400 2rem/1.1 var(--font-display); margin: 80px 0 20px; }
+
+.entries { list-style: none; padding: 0; margin: 0; }
+.entries li { padding: 18px 0; border-top: 1px solid var(--line); }
+.entries li:last-child { border-bottom: 1px solid var(--line); }
+.entries a { display: block; text-decoration: none; }
+.entries .title { font: 400 1.55rem/1.2 var(--font-display); display: block; }
+.entries a:hover .title { color: var(--accent); }
+.entries time { font: 0.75rem var(--font-mono); color: var(--muted); }
+.entries .blurb { display: block; color: var(--muted); margin: 6px 0 0; font-size: 0.95rem; }
+
+.made p { margin: 0 0 14px; }
+.made a { font-weight: 700; }
+
+.bottom {
+  margin: 96px 0 0; padding: 20px 0 40px; border-top: 1px solid var(--line);
+  display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 0.85rem; color: var(--muted);
+}
+.bottom button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Post */
+.post-head { padding: 80px 0 32px; }
+.post-head h1 { font: 400 clamp(2.4rem, 6vw, 3.6rem)/1.02 var(--font-display); margin: 0 0 16px; letter-spacing: -0.015em; }
+.post-head time { font: 0.78rem var(--font-mono); color: var(--muted); }
+.post p { margin: 0 0 1.1em; }
+.post h2 { margin: 56px 0 16px; font-size: 1.7rem; }
+.post blockquote { font: italic 400 1.6rem/1.3 var(--font-display); margin: 40px 0; color: var(--accent); }
+
+/* Fun mode: the margin notes are handwritten and a bit crooked; links get wavy. */
+[data-mode="fun"] .note { font: 500 1.12rem/1.15 var(--font-hand); color: var(--accent); border-color: var(--accent); }
+[data-mode="fun"] .note:nth-of-type(odd) { transform: rotate(-2deg); }
+[data-mode="fun"] .note:nth-of-type(even) { transform: rotate(1.5deg); }
+[data-mode="fun"] .note .ref { font-family: var(--font-hand); font-size: 1rem; }
+[data-mode="fun"] main a:hover { text-decoration-style: wavy; }
+[data-mode="fun"] .entries li { transition: background 0.2s ease, padding 0.2s ease; }
+[data-mode="fun"] .entries li:hover { background: var(--tint); padding-left: 14px; }

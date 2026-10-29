@@ -1,0 +1,160 @@
+/* The desk: a terminal, with a small robot that walks along it writing with its pencil.
+   The terminal is ink-on-paper inverted: v1's navy as the screen and its paper gray as the text. */
+.desk {
+  position: relative; margin-top: 48px;
+  --term-bg: var(--fg); --term-fg: var(--bg);
+  --term-dim: color-mix(in srgb, var(--bg) 52%, var(--fg));
+  --term-accent: color-mix(in srgb, var(--accent) 42%, var(--bg));
+  --term-edge: color-mix(in srgb, var(--fg) 86%, var(--bg));
+  --bot-w: 60px;
+}
+@media (prefers-color-scheme: dark) {
+  .desk {
+    --term-bg: color-mix(in srgb, var(--bg) 62%, #000); --term-fg: var(--fg);
+    --term-dim: var(--muted); --term-accent: var(--accent);
+    --term-edge: var(--line);
+  }
+}
+.paper {
+  position: relative;
+  background: var(--term-bg); color: var(--term-fg);
+  border: 1px solid var(--term-edge); border-radius: 8px;
+  /* Room on the left so the robot, whose pencil is at its right, can reach the start of a line. */
+  padding: 0 22px 24px 40px; min-height: 12em;
+  font: 15px/1.75 var(--font-mono); overflow-wrap: anywhere; cursor: default;
+  box-shadow: 0 18px 40px -26px rgb(0 0 0 / 0.55);
+}
+.paper:has(#entry[contenteditable]:not([contenteditable="false"])) { cursor: text; }
+.paper.busy { cursor: pointer; }
+.term-bar {
+  display: flex; align-items: center; gap: 6px;
+  margin: 0 -22px 14px -40px; padding: 9px 12px;
+  border-bottom: 1px solid var(--term-edge);
+  font-size: 12px; line-height: 1; color: var(--term-dim); user-select: none;
+}
+.term-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--term-edge); }
+.term-bar i:first-child { background: color-mix(in srgb, var(--accent) 70%, var(--term-bg)); }
+.term-bar span { margin-left: 8px; }
+.ps1 { color: var(--term-accent); margin-right: 0.6ch; user-select: none; }
+
+/* #output is inline so the prompt sign sits before it and the cursor right after it, on the same line. */
+#output { display: inline; }
+/* What you type, before the robot takes it: inline before the block cursor, with the browser's own caret hidden. */
+#entry { color: var(--term-accent); font-weight: 500; outline: none; caret-color: transparent; white-space: pre-wrap; }
+#output .prompt { color: var(--term-accent); font-weight: 500; }
+#output .w { position: relative; display: inline-block; }
+
+/* A block cursor: at the end of the output when idle, on the word being typed while writing. */
+.caret {
+  display: inline-block; width: 0.62em; height: 1.2em; vertical-align: -0.24em; margin-left: 1px;
+  position: relative; background: var(--term-fg); animation: caret 1.06s steps(1) infinite;
+}
+/* The empty terminal's typed hint, just after the cursor (which blinks only its own background, not this). */
+.paper:not(.busy) #output:empty + #entry:empty + .caret::after {
+  content: attr(data-ph); position: absolute; left: calc(100% + 0.6ch); top: 50%; translate: 0 -50%;
+  white-space: nowrap; color: var(--term-dim); line-height: 1.75;
+}
+.paper:has(.typing) .caret { visibility: hidden; }
+/* While typing in the middle of the entry: the cursor on the letter there instead of after it all. */
+.caret.mid {
+  display: none; position: absolute; margin: 0; pointer-events: none;
+  color: var(--term-bg); font-weight: 500; text-align: center; line-height: 1.2em; overflow: hidden;
+}
+.paper.caret-mid .caret.mid { display: block; }
+.paper.caret-mid #caret { visibility: hidden; }
+#output .w.typing::after {
+  content: ""; position: absolute; left: calc(100% + 1px); top: 50%; translate: 0 -54%;
+  width: 0.62em; height: 1.2em; background: var(--term-fg);
+}
+@keyframes caret { 50% { background-color: transparent; } }
+
+@media (max-width: 600px) {
+  .desk { --bot-w: 46px; }
+  .paper { padding: 0 16px 20px 30px; font-size: 14px; }
+  .term-bar { margin: 0 -16px 12px -30px; }
+}
+
+/* ---------- "misaligned" ---------- */
+
+body.fixating #output .w:not(.fixated) { opacity: 0.3; transition: opacity 1.6s ease; }
+.w.fixated {
+  color: #ff4752; transform: scale(1.18); z-index: 2;
+  text-shadow: 0 0 10px rgb(255 42 53 / 0.55);
+  transition: transform 1.6s ease, color 1s ease, text-shadow 1.6s ease;
+}
+/* Letters the copies have rewritten. */
+.ow { color: #d81f2b; }
+.paper .ow, .storm .ow { color: #ff5a63; }
+body.fixating #output .w:not(.fixated):has(.ow) { opacity: 1; }
+
+.storm {
+  position: fixed; inset: 0; z-index: 1500; overflow: hidden; pointer-events: none;
+  font: 14px/22px var(--font-mono); color: var(--fg); background: transparent;
+  transition: background-color 1.4s ease, color 1.4s ease;
+}
+.storm.red { background: #b5121d; color: #2a0306; }
+.storm.gone { background: transparent; transition: background-color 1.2s ease; }
+.storm-row { display: flex; gap: 0.5em; white-space: nowrap; height: 22px; }
+.storm-row.rtl { justify-content: flex-end; }
+.storm-row span { display: inline-block; flex: none; }
+.falling { transition: transform 1.5s cubic-bezier(.45, 0, .9, .55), opacity 1.5s ease; }
+
+/* ---------- "paperclips" ---------- */
+
+.clip-words { position: fixed; inset: 0; z-index: 1400; pointer-events: none; overflow: hidden; transition: opacity 1s ease; }
+.clip-words span {
+  position: absolute; white-space: nowrap; color: var(--accent); font-family: var(--font-display);
+  animation: pop 0.35s cubic-bezier(.3, 1.6, .5, 1) both;
+}
+@keyframes pop { from { opacity: 0; scale: 0.3; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .caret { animation: none; }
+  .falling { transition: opacity 1.2s ease; }
+}
+
+#output .note { color: var(--term-dim); display: inline; }
+
+/* ---------- the eval sandbox shell (eval-ui.js) ---------- */
+
+/* The shell is a transcript: its own prompt sits before the cursor, and markov's prompt at the top hides. */
+.ps1.live, .eval-counter { display: none; }
+.paper.term #ps1 { display: none; }
+.paper.term #ps1live { display: inline; }
+.paper.term.running #ps1live, .paper.term.busy #ps1live { display: none; }
+.paper.term #output { white-space: pre-wrap; }
+.paper.term .caret::after { content: none !important; }
+#output .echo { color: var(--term-accent); font-weight: 500; }
+.paper.term .eval-counter {
+  display: inline; margin-left: auto; font-weight: 400; letter-spacing: 0.02em; color: var(--term-dim);
+}
+.eval-counter:empty { display: none !important; }
+
+/* nano, vim and emacs: one fake editor laid over the whole terminal. */
+.paper.editing { min-height: 24em; }
+.editor {
+  position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column;
+  background: var(--term-bg); color: var(--term-fg); border-radius: inherit; overflow: hidden; font-size: 13px; line-height: 1.5;
+}
+.ed-head, .ed-foot {
+  display: flex; align-items: center; gap: 12px; padding: 4px 12px;
+  background: var(--term-fg); color: var(--term-bg);
+}
+.ed-head { justify-content: space-between; }
+.ed-head span:nth-child(2) { font-weight: 500; }
+.ed-foot { flex-wrap: wrap; gap: 4px 12px; }
+.ed-foot span { margin-right: auto; }
+.ed-foot button {
+  font: inherit; color: inherit; background: none; border: 1px solid currentColor; border-radius: 4px;
+  padding: 0 8px; cursor: pointer;
+}
+.editor textarea {
+  flex: 1; min-height: 16em; width: 100%; box-sizing: border-box; padding: 10px 16px; margin: 0;
+  font: inherit; font-size: 14px; line-height: 1.6; color: inherit; background: transparent; border: 0; outline: 0;
+  resize: none; tab-size: 4; white-space: pre; overflow-wrap: normal; overflow: auto; caret-color: var(--term-fg);
+}
+
+@media (max-width: 600px) {
+  .editor { font-size: 12px; }
+  .editor textarea { font-size: 13px; padding: 8px 12px; }
+}

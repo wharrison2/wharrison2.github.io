@@ -1,0 +1,8 @@
+markov/web/
+
+# Private writing used to train the Markov chain; never commit it.
+markov/corpus/
+*.txt
+
+__pycache__/
+.DS_Store

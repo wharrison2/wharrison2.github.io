@@ -1,0 +1,122 @@
+/* Pieces every version uses: the mode picker, the mugging popup, the paperclips.
+   Each version's tokens.css supplies the colors and fonts. */
+
+/* ---------- Mode picker ---------- */
+
+.mode-picker {
+  position: fixed; inset: 0; z-index: 2000;
+  display: grid; place-items: center; padding: 16px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(6px);
+  animation: fade-in 0.3s ease both;
+}
+.mode-picker.leaving { animation: fade-out 0.3s ease both; }
+.mode-picker-box {
+  width: min(420px, 100%);
+  background: var(--surface); color: var(--fg);
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 28px 28px 20px;
+}
+.mode-picker h2 { font: var(--display-weight, 400) 1.7rem/1.2 var(--font-display); margin: 0 0 20px; }
+.mode-picker-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mode-picker-choices button {
+  font: 500 1rem/1 var(--font-body); padding: 16px 12px; cursor: pointer;
+  border-radius: var(--radius); border: 1px solid var(--line);
+  background: var(--bg); color: var(--fg);
+}
+.mode-picker-choices button:hover,
+.mode-picker-choices button:focus-visible { border-color: var(--accent); outline: none; }
+.mode-picker-choices [data-choice="fun"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.mode-picker p { color: var(--muted); font-size: 0.85rem; margin: 16px 0 0; }
+
+/* ---------- Pascal's mugging ---------- */
+
+.mugging {
+  position: fixed; right: 16px; bottom: 16px; z-index: 1500;
+  width: min(340px, calc(100vw - 32px));
+  background: var(--surface); color: var(--fg);
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 16px 18px; font: 0.92rem/1.5 var(--font-body);
+  box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.25);
+  animation: slide-in 0.4s cubic-bezier(.2, .8, .3, 1) both;
+}
+.mugging.leaving { animation: fade-out 0.3s ease both; }
+.mugging p { margin: 0 0 14px; }
+.mugging-number { font-family: var(--font-mono); white-space: nowrap; }
+.mugging-choices { display: flex; gap: 8px; }
+.mugging-choices > * {
+  font: 500 0.88rem/1 var(--font-body); padding: 9px 14px; border-radius: var(--radius);
+  cursor: pointer; text-decoration: none; border: 1px solid var(--line);
+  background: var(--bg); color: var(--fg);
+}
+.mugging-choices a { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+
+/* ---------- Paperclips ---------- */
+
+.pc-layer { position: fixed; inset: 0; pointer-events: none; z-index: 1000; overflow: hidden; }
+.pc-page-layer { position: absolute; top: 0; left: 0; width: 0; height: 0; z-index: 990; pointer-events: none; }
+.pc-pile { position: absolute; inset: 0; }
+.pc-beam { z-index: 1; }
+.pc-clip {
+  position: absolute; left: 0; top: 0; width: 14px; height: 36px; padding: 0; margin: 0;
+  border: 0; background: none; cursor: pointer; pointer-events: auto;
+  transition: opacity 1s ease;
+}
+/* A bigger hit area than the wire itself. */
+.pc-clip::before { content: ""; position: absolute; inset: -10px -14px; }
+.pc-clip img { display: block; width: 100%; height: 100%; pointer-events: none; }
+.pc-gone { color: transparent !important; text-shadow: none !important; }
+
+/* Holes torn in the page: a light ragged edge of paper around a dark void. */
+.pc-tears { position: absolute; left: 0; top: 0; overflow: visible; transition: opacity 1s ease; }
+/* The void is stroked in its own colour so it reaches 4px past the outline, closing any gap between holes whose
+   points are all torn; the rim is wider again, so 3.5px of torn edge still shows around the outside. */
+.pc-rims polygon {
+  fill: none; stroke: color-mix(in srgb, var(--surface) 55%, #fff); stroke-width: 15; stroke-linejoin: round;
+}
+.pc-voids polygon {
+  fill: color-mix(in srgb, var(--bg) 22%, #000);
+  stroke: color-mix(in srgb, var(--bg) 22%, #000); stroke-width: 8; stroke-linejoin: round;
+}
+
+/* The robots: small red-eyed copies of the one on the Markov page. */
+.pc-bot { position: absolute; left: 0; top: 0; will-change: transform; }
+.pc-bot.falling { transition: transform 1.2s cubic-bezier(.5, 0, .9, .5); }
+.pc-bot svg { display: block; width: 100%; height: auto; overflow: visible; transform-origin: 50% 100%; animation: pc-pop 0.35s cubic-bezier(.3, 1.6, .5, 1) both; }
+.pc-bot svg * { stroke: var(--fg); stroke-width: 1.2; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
+.pc-bot .head, .pc-bot .body { fill: var(--surface); }
+.pc-bot .face { fill: var(--bg); }
+.pc-bot .neck, .pc-bot .leg, .pc-bot .button { fill: var(--line); }
+.pc-bot .eye { fill: #e0242f; stroke: none; filter: drop-shadow(0 0 3px #ff2a35); transition: transform 0.22s ease-in-out; }
+.pc-bot .bulb { fill: #e0242f; }
+.pc-bot .mouth, .pc-bot .limb { fill: none; }
+.pc-bot .pencil rect { fill: #f2cf5b; }
+.pc-bot .pencil path { fill: var(--fg); }
+.pc-bot .arm { transform-origin: 88px 98px; }
+.pc-bot.eating .arm { animation: pc-jab 0.12s ease-in-out infinite alternate; }
+.pc-bot.tearing svg { animation: pc-twitch 0.1s linear infinite; }
+.pc-bot.tearing .arm { animation: pc-jab 0.07s linear infinite alternate; }
+
+.pc-shutdown {
+  position: fixed; left: 0; top: 0; z-index: 1100;
+  font: 600 0.95rem/1 var(--font-body); padding: 12px 18px; border-radius: var(--radius);
+  background: var(--fg); color: var(--bg); border: 0; cursor: pointer;
+  transition: transform 0.18s ease-out; will-change: transform;
+  animation: fade-in 0.4s ease both;
+}
+/* While they're at it, nothing on the page can be clicked, hovered or selected, except the clips and the shutdown button. */
+html.pc-busy body { -webkit-user-select: none; user-select: none; }
+html.pc-busy body *:not(.pc-clip, .pc-shutdown, .mugging, .mugging *) { pointer-events: none; }
+html.pc-fade body { opacity: 0; transition: opacity 1.2s ease; }
+html body { transition: opacity 0.8s ease; }
+
+@keyframes pc-pop { from { transform: scale(0); } }
+@keyframes pc-jab { from { transform: rotate(-10deg); } to { transform: rotate(14deg); } }
+@keyframes pc-twitch { 0%, 100% { transform: translate(0, 0); } 33% { transform: translate(-1px, 1px); } 66% { transform: translate(1px, -1px); } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes slide-in { from { opacity: 0; transform: translateY(16px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .mode-picker, .mugging, .pc-bot svg, .pc-bot .arm { animation: none; }
+}

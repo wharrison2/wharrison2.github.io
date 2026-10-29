@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="../shared/clip.svg">
+  <script src="../shared/tool-head.js"></script>
+  <link rel="stylesheet" href="../shared/shared.css">
+  <link rel="stylesheet" href="../shared/tools.css">
+  <link rel="stylesheet" href="qr.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+  <script type="module" src="../shared/tool-page.js"></script>
+  <script type="module" src="../shared/mode.js"></script>
+  <script type="module" src="qr.js"></script>
+  <title>QR codes</title>
+</head>
+<body>
+  <div class="page">
+    <header class="bar">
+      <a class="home" data-home href="../v1/">William Harrison</a>
+      <nav>
+        <a href="../markov/">Markov</a>
+        <a href="./" aria-current="page">QR codes</a>
+      </nav>
+    </header>
+
+    <main>
+      <h1>QR codes</h1>
+      <p class="sub">Everything happens in your browser; nothing you type is sent anywhere.</p>
+
+      <div class="maker">
+        <form id="form" class="controls" onsubmit="return false">
+          <label for="text">Text or link</label>
+          <textarea id="text" rows="3">https://github.com/wharrison2</textarea>
+
+          <div class="fields">
+            <div>
+              <label for="ecl">Error correction</label>
+              <select id="ecl">
+                <option value="L">Low (7%)</option>
+                <option value="M" selected>Medium (15%)</option>
+                <option value="Q">Quartile (25%)</option>
+                <option value="H">High (30%)</option>
+              </select>
+            </div>
+            <div>
+              <label for="shape">Shape</label>
+              <select id="shape">
+                <option value="square">Squares</option>
+                <option value="rounded">Rounded</option>
+                <option value="dots">Dots</option>
+              </select>
+            </div>
+            <div>
+              <label for="margin">Margin</label>
+              <input id="margin" type="number" min="0" max="10" value="4">
+            </div>
+          </div>
+          <div class="fields colors">
+            <div>
+              <label for="fg">Foreground</label>
+              <input id="fg" type="color" value="#1e2230">
+            </div>
+            <div>
+              <label for="bg">Background</label>
+              <input id="bg" type="color" value="#ffffff">
+            </div>
+            <div>
+              <label for="size">PNG size</label>
+              <select id="size">
+                <option value="512">512 px</option>
+                <option value="1024" selected>1024 px</option>
+                <option value="2048">2048 px</option>
+              </select>
+            </div>
+          </div>
+          <p class="warning" id="warning" hidden></p>
+        </form>
+
+        <section class="preview" aria-label="Preview">
+          <div class="code" id="code"></div>
+          <p class="info" id="info"></p>
+          <div class="actions">
+            <button class="btn" type="button" id="png">Download PNG</button>
+            <button class="btn quiet" type="button" id="svg">Download SVG</button>
+            <button class="btn quiet" type="button" id="copy">Copy</button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="bottom">
+      <a href="https://github.com/wharrison2">GitHub</a>
+      <button type="button" data-mode-toggle></button>
+      <a href="../">Other versions</a>
+    </footer>
+  </div>
+</body>
+</html>

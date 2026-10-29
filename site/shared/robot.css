@@ -1,0 +1,71 @@
+/* The robot (see robot.js): its drawing and poses. */
+
+/* The rig is moved by robot.js so the pencil tip sits on the write position. */
+.robot-rig {
+  position: absolute; left: 0; top: 0; z-index: 3; width: var(--bot-w, 60px);
+  pointer-events: none; will-change: transform;
+}
+/* Its drawing takes clicks (not the gaps around it): to skip ahead, or to keep going once it's done. */
+.robot-rig .robot { pointer-events: auto; }
+.robot-rig.can-continue .robot { cursor: pointer; }
+.robot { --heat: 0; display: block; width: 100%; height: auto; overflow: visible; }
+.robot * { stroke: var(--fg); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.robot .head, .robot .body { fill: var(--surface); }
+.robot .face { fill: var(--bg); }
+.robot .neck, .robot .leg, .robot .button { fill: var(--line); }
+/* --heat goes from 0 to 1 as it fixates: the eyes and bulb redden, swell and start to glow. */
+.robot .bulb { fill: color-mix(in srgb, #e0242f calc(var(--heat) * 100%), var(--accent)); }
+.robot .eye {
+  fill: color-mix(in srgb, #e0242f calc(var(--heat) * 100%), var(--fg)); stroke: none;
+  transform-box: fill-box; transform-origin: center; animation: blink 5s infinite;
+  scale: calc(1 + var(--heat) * 0.28);
+  filter: drop-shadow(0 0 calc(var(--heat) * 5px) rgb(255 42 53 / var(--heat)));
+}
+.robot .mouth { fill: none; transition: d 0.4s ease; }
+.robot .limb { fill: none; }
+.robot .pencil rect { fill: var(--note-yellow, #f2cf5b); }
+.robot .pencil path { fill: var(--fg); }
+/* The shoulder pivot is just outside the body, and every pose below rotates the arm outward (negative angles),
+   so neither the limb nor the pencil can swing into the body: clear for any angle from -30deg to +16deg. */
+.robot .arm { transform-box: view-box; transform-origin: 92px 99px; transition: transform 0.3s ease; }
+.robot.writing .arm { animation: scribble 0.22s ease-in-out infinite alternate; }
+.robot.writing .bulb { animation: bulb 0.6s steps(2) infinite; }
+.robot.sleeping .eye { transform: scaleY(0.15); animation: none; }
+.robot.staring .eye { animation: none; }
+.robot.alarm .mouth { d: path("M53 62 L67 62"); }
+.robot.alarm .arm { animation: jab 0.16s ease-in-out infinite alternate; }
+
+.robot .eyes { transition: transform 0.3s ease; }
+.robot.thinking .eyes { transform: translate(-3px, -4px); } /* working out what to write */
+.robot.thinking .bulb { animation: bulb 0.9s steps(2) infinite; }
+
+@keyframes blink { 0%, 94%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
+@keyframes scribble { from { transform: rotate(-6deg); } to { transform: rotate(3deg); } }
+@keyframes jab { from { transform: rotate(-22deg); } to { transform: rotate(-9deg); } }
+@keyframes bulb { 50% { fill: var(--muted); } }
+
+/* Its copies, swarming the page. Same drawing, always red-eyed. */
+.bot-clones { position: fixed; inset: 0; z-index: 1600; pointer-events: none; overflow: hidden; }
+.bot-clone { position: absolute; left: 0; top: 0; width: var(--clone-w, 40px); will-change: transform; }
+.bot-clone .robot { --heat: 1; animation: clone-pop 0.35s cubic-bezier(.3, 1.6, .5, 1) both, clone-twitch 0.11s linear 0.35s infinite; }
+@keyframes clone-pop { from { scale: 0; } }
+@keyframes clone-twitch { 0%, 100% { translate: 0 0; } 33% { translate: -1px 1px; } 66% { translate: 1px -1px; } }
+
+/* ---------- Moving the cursor: the robot picks it up and carries it ---------- */
+
+.caret.lifted { visibility: hidden; }
+.robot .grip { display: none; fill: var(--term-fg); stroke: none; }
+.robot.holding .grip { display: inline; }
+.robot.holding .pencil { visibility: hidden; }
+/* Arm up, to carry it (and to come over for it); arm down (the usual pose) puts it exactly on the cursor's spot. */
+.robot.lifting .arm { transform: rotate(-28deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .robot .eye, .robot.writing .arm, .robot.alarm .arm, .robot.writing .bulb, .bot-clone .robot { animation: none; }
+}
+
+/* The hint robot's "misaligned" beat: eyes and bulb go red while it offers help (class set by the page). */
+.robot.misaligned .eye {
+  fill: #e0242f; animation: none; filter: drop-shadow(0 0 4px rgb(255 42 53 / 0.9)); transition: fill 0.6s ease;
+}
+.robot.misaligned .bulb { fill: #e0242f; }

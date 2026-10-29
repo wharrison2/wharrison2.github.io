@@ -1,0 +1,39 @@
+/* Layout and controls for the tool pages, in whichever version's tokens are loaded. */
+* { box-sizing: border-box; }
+body { margin: 0; font: 17px/1.6 var(--font-body); }
+a { color: inherit; text-underline-offset: 3px; }
+
+.page { max-width: 880px; margin: 0 auto; padding: 24px 16px 48px; }
+.bar { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 56px; }
+.bar .home { font: var(--display-weight) 1.25rem/1 var(--font-display); text-decoration: none; }
+.bar nav { display: flex; gap: 18px; font-size: 0.92rem; }
+.bar nav a { text-decoration: none; color: var(--muted); }
+.bar nav a:hover, .bar nav a[aria-current] { color: var(--accent); }
+
+h1 { font: var(--display-weight) clamp(2.2rem, 6vw, 3.2rem)/1.05 var(--font-display); margin: 0 0 8px; letter-spacing: -0.01em; }
+.sub { color: var(--muted); margin: 0 0 32px; max-width: 34em; }
+
+label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+textarea, input, select {
+  width: 100%; font: inherit; font-size: 1rem; color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px;
+}
+textarea:focus, input:focus, select:focus { outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: 1px; border-color: var(--accent); }
+textarea { resize: vertical; min-height: 76px; }
+input[type="color"] { padding: 4px; height: 44px; cursor: pointer; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 16px 0 20px; }
+.btn {
+  font: 600 0.95rem/1 var(--font-body); background: var(--accent); color: var(--accent-fg);
+  border: 1px solid var(--accent); border-radius: var(--radius); padding: 12px 22px; cursor: pointer;
+  text-decoration: none; display: inline-block;
+}
+.btn.quiet { background: transparent; color: var(--fg); border-color: var(--line); }
+.btn.quiet:hover { border-color: var(--accent); }
+.btn:disabled { opacity: 0.55; cursor: wait; }
+.status { color: var(--muted); font-size: 0.85rem; margin-top: 12px; min-height: 1.4em; }
+
+.bottom {
+  margin-top: 80px; padding-top: 18px; border-top: 1px solid var(--line);
+  display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 0.85rem; color: var(--muted);
+}
+.bottom button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }

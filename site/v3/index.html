@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="../shared/clip.svg">
+  <script>try{document.documentElement.dataset.mode=localStorage.getItem("site.mode")||"";localStorage.setItem("site.variant","v3")}catch(e){}</script>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="../shared/shared.css">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="../shared/lorem.js"></script>
+  <script type="module" src="../shared/mode.js"></script>
+  <title>William Harrison</title>
+</head>
+<body>
+  <div class="board">
+    <header class="top">
+      <a class="home" href="./">William Harrison</a>
+      <nav>
+        <a href="#writing">Writing</a>
+        <a href="../markov/">Markov</a>
+        <a href="../qr/">QR codes</a>
+      </nav>
+    </header>
+
+    <main class="pieces">
+      <section class="piece intro">
+        <p data-lorem="s2"></p>
+        <p data-lorem="s3"></p>
+      </section>
+
+      <figure class="piece photo">
+        <div class="frame">photo</div>
+        <figcaption data-lorem="w5"></figcaption>
+      </figure>
+
+      <section class="piece writing" id="writing">
+        <h2>Writing</h2>
+        <ul>
+          <li><a href="post.html"><span class="title" data-lorem="w5t"></span><time>Oct 2026</time></a></li>
+          <li><a href="post.html"><span class="title" data-lorem="w3t"></span><time>Aug 2026</time></a></li>
+          <li><a href="post.html"><span class="title" data-lorem="w7t"></span><time>Jun 2026</time></a></li>
+          <li><a href="post.html"><span class="title" data-lorem="w4t"></span><time>Mar 2026</time></a></li>
+          <li><a href="post.html"><span class="title" data-lorem="w6t"></span><time>Nov 2025</time></a></li>
+        </ul>
+      </section>
+
+      <aside class="piece note yellow">
+        <h3><a href="../markov/">Markov</a></h3>
+        <p data-lorem="s2"></p>
+      </aside>
+
+      <aside class="piece note mint">
+        <h3><a href="../qr/">QR codes</a></h3>
+        <p data-lorem="s1"></p>
+      </aside>
+
+      <aside class="piece note lilac">
+        <h3><a href="#" data-lorem="w2t"></a></h3>
+        <p data-lorem="s1"></p>
+      </aside>
+
+      <section class="piece elsewhere">
+        <h2>Elsewhere</h2>
+        <ul>
+          <li><a href="https://github.com/wharrison2">GitHub</a></li>
+          <li><a href="#">Email</a></li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="bottom">
+      <button type="button" data-mode-toggle></button>
+      <a href="../">Other versions</a>
+    </footer>
+  </div>
+</body>
+</html>

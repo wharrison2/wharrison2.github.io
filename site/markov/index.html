@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en" data-paperclips="off">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="../shared/clip.svg">
+  <script src="../shared/tool-head.js"></script>
+  <link rel="stylesheet" href="../shared/shared.css">
+  <link rel="stylesheet" href="../shared/tools.css">
+  <link rel="stylesheet" href="../shared/robot.css">
+  <link rel="stylesheet" href="markov.css">
+  <script type="module" src="../shared/tool-page.js"></script>
+  <script type="module" src="../shared/mode.js"></script>
+  <script type="module" src="markov-page.js"></script>
+  <title>Markov Me</title>
+</head>
+<body>
+  <div class="page">
+    <header class="bar">
+      <a class="home" data-home href="../v1/">William Harrison</a>
+      <nav>
+        <a href="./" aria-current="page">Markov</a>
+        <a href="../qr/">QR codes</a>
+      </nav>
+    </header>
+
+    <main>
+      <h1>Markov Me</h1>
+      <p class="sub">Give it a few words and it writes the sentence around them in the style of my writing, one word at a time. Type a few words into the terminal and click the robot; click it again to keep it going.</p>
+      <div class="status" id="status"></div>
+
+      <div class="desk" id="desk">
+        <div class="paper" id="paper">
+          <div class="term-bar" aria-hidden="true"><i></i><i></i><i></i><span>markov-me — zsh</span><b class="eval-counter" id="evalcounter" aria-live="polite"></b></div>
+          <span class="ps1" id="ps1" aria-hidden="true">~ $</span><div id="output" aria-live="polite"></div><span class="ps1 live" id="ps1live" aria-hidden="true"></span><span id="entry" role="textbox" aria-label="Starting text" spellcheck="false" autocapitalize="off"></span><span class="caret" id="caret" aria-hidden="true" data-ph=""></span>
+        </div>
+        <div class="robot-rig" id="rig">
+          <svg class="robot sleeping" id="robot" viewBox="0 0 120 150" aria-hidden="true">
+            <line class="antenna" x1="60" y1="10" x2="60" y2="24"/>
+            <circle class="bulb" cx="60" cy="9" r="5"/>
+            <rect class="head" x="24" y="24" width="72" height="54" rx="16"/>
+            <rect class="face" x="33" y="34" width="54" height="34" rx="10"/>
+            <g class="eyes">
+              <circle class="eye" cx="49" cy="50" r="5.5"/>
+              <circle class="eye" cx="71" cy="50" r="5.5"/>
+            </g>
+            <path class="mouth" d="M53 60 Q60 64 67 60"/>
+            <rect class="neck" x="54" y="78" width="12" height="6" rx="2"/>
+            <!-- The arm is drawn behind the body and hinges just outside it (92,99), so it never pokes into it. -->
+            <g class="arm">
+              <path class="limb" d="M92 99 Q102 102 106 116"/>
+              <g class="pencil">
+                <rect x="101" y="110" width="9" height="26" rx="2"/>
+                <path d="M101 136 L105.5 146 L110 136 Z"/>
+              </g>
+              <!-- The cursor, when it picks it up; sized and placed by robot.js. -->
+              <rect class="grip" x="97" y="113" width="18" height="36"/>
+            </g>
+            <rect class="body" x="30" y="84" width="60" height="46" rx="14"/>
+            <circle class="button" cx="48" cy="102" r="4"/>
+            <circle class="button" cx="60" cy="102" r="4"/>
+            <rect class="leg" x="40" y="130" width="12" height="14" rx="5"/>
+            <rect class="leg" x="68" y="130" width="12" height="14" rx="5"/>
+          </svg>
+        </div>
+      </div>
+    </main>
+
+    <footer class="bottom">
+      <a href="https://github.com/wharrison2">GitHub</a>
+      <button type="button" data-mode-toggle></button>
+      <a href="../">Other versions</a>
+    </footer>
+  </div>
+</body>
+</html>

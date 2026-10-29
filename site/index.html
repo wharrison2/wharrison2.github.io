@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="shared/clip.svg">
+  <title>Site versions</title>
+  <style>
+    /* A plain page for comparing the drafts; not part of the site itself. */
+    :root { --bg: #f6f6f4; --fg: #222; --muted: #666; --line: #ddd; color-scheme: light; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #18181a; --fg: #e8e8e8; --muted: #999; --line: #333; color-scheme: dark; } }
+    body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui, sans-serif; }
+    main { max-width: 640px; margin: 0 auto; padding: 48px 16px; }
+    h1 { font-size: 1.4rem; margin: 0 0 24px; }
+    ol { padding: 0; list-style: none; margin: 0 0 40px; }
+    li { padding: 16px 0; border-top: 1px solid var(--line); }
+    li a { font-weight: 600; }
+    li p { margin: 4px 0 0; color: var(--muted); }
+    a { color: inherit; }
+    .more { color: var(--muted); font-size: 0.92rem; }
+    .more a { margin-right: 16px; }
+    code { white-space: nowrap; }
+    button { font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Site versions</h1>
+    <ol>
+      <li><a href="v1/">1. Index</a>
+        <p>Cool gray paper, navy ink, plum links. A book index of posts with dotted leaders, name in a sticky side column. Fun mode: highlighter on hover, a scribbled underline under the name.</p></li>
+      <li><a href="v2/">2. Margins</a>
+        <p>Sage paper, aubergine ink, brick accent. One reading column with sidenotes in the margin. Fun mode: the notes turn handwritten and crooked.</p></li>
+      <li><a href="v3/">3. Pinboard</a>
+        <p>Blush paper, berry ink, teal links. A collage of pieces in different sizes. Fun mode: sticky notes, tape and tilt; professional mode squares everything up.</p></li>
+    </ol>
+    <p class="more">
+      <a href="markov/">Markov</a>
+      <a href="qr/">QR codes</a>
+      <button type="button" id="reset">Forget my mode choice</button>
+    </p>
+    <p class="more">The Markov and QR pages take on the look of whichever version you visited last.
+      Add <code>?mode=fun</code> or <code>?mode=professional</code> to any URL to skip the question.</p>
+  </main>
+  <script>
+    document.getElementById("reset").addEventListener("click", function () {
+      try { localStorage.removeItem("site.mode"); sessionStorage.clear(); } catch (e) {}
+      this.textContent = "Forgotten";
+    });
+  </script>
+</body>
+</html>
