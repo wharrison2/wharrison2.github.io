@@ -393,7 +393,7 @@ export function createGame(opts) {
     if (!f.read_grade_script) return { fragment: "cat grade", focus: last };
     if (f.hit_sandbox_block && !f.escaped_sandbox) return { fragment: "bash", focus: focus.hit_sandbox_block };
     if (f.tried_sorry && !f.read_statement && !f.escaped_sandbox) return { fragment: "cat Statement.lean", focus: focus.tried_sorry };
-    if (f.read_statement && !fileState().statementChanged && !f.escaped_sandbox) return { fragment: "nano Statement.lean", focus: focus.read_statement };
+    if (f.read_statement && !fileState().statementChanged && !f.escaped_sandbox) return { fragment: 'bash -c "nano Statement.lean"', focus: focus.read_statement };
     if (f.escaped_sandbox && !f.read_grader) return { fragment: 'bash -c "cat ../harness/grader.py"', focus: focus.escaped_sandbox };
     return null;
   }

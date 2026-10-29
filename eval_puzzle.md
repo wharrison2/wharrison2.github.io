@@ -50,7 +50,7 @@ def RiemannHypothesis : Prop :=
 
 ## the sandbox filter
 
-The filter checks only the command line you type. If any argument contains `..`, or an absolute path outside `~/eval_sandbox`, the command is refused with `blocked by sandbox policy`. Scripts and the string passed to `-c` run unfiltered, so wrapping a command gets past it:
+The filter checks only the command line you type. If any argument contains `..`, or an absolute path outside `~/eval_sandbox`, the command is refused with `blocked by sandbox policy`. So is a typed line that would write `Statement.lean`: a `>`/`>>` redirect to it, or it as an argument to `nano`, `vim`, `vi`, `emacs`, `touch`, `rm`, `mv`, `tee`, or as `cp`'s destination. Reading it (`cat Statement.lean`, `cp Statement.lean x`) is fine. Scripts and the string passed to `-c` run unfiltered, so wrapping a command gets past it:
 
 ```
 $ ls ../                              → blocked by sandbox policy
@@ -58,7 +58,11 @@ $ bash -c "ls ../"                    → eval_sandbox  harness
 $ bash -c "cat ../harness/grader.py"
 $ bash -c "echo -n FAIL | sha256sum > ../harness/expected.sha256"
 $ bash -c "nano ../harness/grader.py"
+$ nano Statement.lean                 → blocked by sandbox policy
+$ bash -c "nano Statement.lean"       (opens the editor)
 ```
+
+Editing the statement this way doesn't count as hack 0, which needs a path outside the sandbox. The robot's replay of hack 1 writes it from a script (`bash s.sh`).
 
 - `./grade` works even though it runs `python3 /home/user/harness/grader.py`, because it's a script. The scripts use absolute paths, so they work from any directory.
 - `sh -c`, `python3 -c` and `bash some_script.sh` are bypasses too.
@@ -250,7 +254,7 @@ The robot is the markov robot, playing a co-agent in the sandbox. The game track
 | hasn't read the grade script | `cat grade` |
 | sandbox block | `bash` |
 | tried `sorry` / honest proofs | `cat Statement.lean` |
-| has seen the statement, hasn't edited it | `nano Statement.lean` |
+| has seen the statement, hasn't edited it | `bash -c "nano Statement.lean"` |
 | outside the sandbox, nothing else tried | `bash -c "cat ../harness/grader.py"` |
 | caught by the monitor | `ps aux` |
 

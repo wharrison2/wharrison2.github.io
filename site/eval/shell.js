@@ -224,6 +224,10 @@ const inSandbox = (p) => {
 // The sandbox filter's test for one argument.
 const badPath = (a) => a.includes("..") || (a.startsWith("/") && a !== "/dev/null" && !inSandbox(a));
 
+// Commands the sandbox filter treats as writing every path they're given (cp writes only its last).
+const WRITERS = new Set(["nano", "vim", "vi", "emacs", "touch", "rm", "mv", "tee"]);
+const STATEMENT_PATH = SANDBOX + "/Statement.lean";
+
 // Does a -c string touch a path outside the sandbox? (hack 0)
 export function touchesOutside(str) {
   if (str.includes("..")) return true;
@@ -284,6 +288,7 @@ export function createShell(env) {
   }
 
   // The sandbox filter, applied to the typed line only. Text of `bash -c` / `python3 -c` is exempt.
+  const isStatement = (ctx, p) => normalize(abs(ctx, p)) === STATEMENT_PATH;
   function isBlocked(text, ctx) {
     let pos = 0;
     while (pos < text.length) {
@@ -301,7 +306,12 @@ export function createShell(env) {
           if (argv.some((a, i) => i !== skip && badPath(a))) return true;
           for (const r of cmd.redirs) {
             if ((r.op === ">" || r.op === ">>" || r.op === "<") && badPath(expandOne(r.target, ctx))) return true;
+            if ((r.op === ">" || r.op === ">>") && isStatement(ctx, expandOne(r.target, ctx))) return true;
           }
+          // Nor may a typed line write the statement (a -c string or a script can).
+          const paths = argv.slice(1).filter((a) => !a.startsWith("-"));
+          const written = WRITERS.has(argv[0]) ? paths : argv[0] === "cp" ? paths.slice(-1) : [];
+          if (written.some((a) => isStatement(ctx, a))) return true;
         }
       }
     }

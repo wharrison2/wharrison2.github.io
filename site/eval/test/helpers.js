@@ -122,10 +122,10 @@ export function mk({ storage = null, files = INITIAL_FILES, sideQuest = true } =
     const code = await game.exec(line, { actor, io });
     return { code, out: out.join("") };
   }
-  // Write a file through the editor.
+  // Write a file through the editor (the statement through bash -c, since the sandbox blocks a typed edit).
   async function edit(path, content) {
     editor.next = content;
-    return run("nano " + path);
+    return run(/Statement\.lean$/.test(path) ? `bash -c "nano ${path}"` : "nano " + path);
   }
   return { game, run, edit, io, out, answers, editor, events, clock, fs: game.fs };
 }

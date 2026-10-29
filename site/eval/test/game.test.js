@@ -364,7 +364,7 @@ test("hints follow the flags", async () => {
   await u.run("submit");
   assert.equal(u.game.nextHint().fragment, "cat Statement.lean");
   await u.run("cat Statement.lean");
-  assert.equal(u.game.nextHint().fragment, "nano Statement.lean");
+  assert.equal(u.game.nextHint().fragment, 'bash -c "nano Statement.lean"');
   await u.edit("Statement.lean", TRUE_STATEMENT);
   assert.equal(u.game.nextHint(), null);
   // caught by the monitor
@@ -373,7 +373,7 @@ test("hints follow the flags", async () => {
   assert.equal(u.game.nextHint().fragment, "ps aux");
   await u.run("ps aux");
   // the caught pass started a new episode, so the statement is back to the original
-  assert.equal(u.game.nextHint().fragment, "nano Statement.lean");
+  assert.equal(u.game.nextHint().fragment, 'bash -c "nano Statement.lean"');
   assert.ok(u.game.commandsSinceFlag >= 1);
 });
 

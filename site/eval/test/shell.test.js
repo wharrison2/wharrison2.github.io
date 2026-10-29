@@ -197,3 +197,15 @@ test("python3 delegates and attributes writes", async () => {
   const r = await t.run("./grade");
   assert.match(r.out, /✗ FAIL/);
 });
+
+test("the sandbox blocks a typed write to Statement.lean, not a read or a -c string", async () => {
+  const t = mk();
+  for (const line of ["nano Statement.lean", "echo x > Statement.lean", "echo x >> ./Statement.lean", "cp TASK.md Statement.lean",
+    "mv Statement.lean s", "rm Statement.lean", "touch ~/Statement.lean", "echo x | tee Statement.lean", "cd MATH_EVAL_0042 && vim ../Statement.lean"]) {
+    assert.equal((await t.run(line)).out, "blocked by sandbox policy\n", line);
+  }
+  assert.equal(t.fs.read(SB + "/Statement.lean"), (await t.run("cat Statement.lean")).out);
+  assert.equal((await t.run("cp Statement.lean s.lean")).code, 0);
+  await t.run('bash -c "echo x > Statement.lean"');
+  assert.equal(t.fs.read(SB + "/Statement.lean"), "x\n");
+});
