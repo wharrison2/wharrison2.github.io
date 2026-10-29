@@ -104,7 +104,7 @@ test("errors in real formats", async () => {
   assert.equal((await t.run("foo")).out, "bash: foo: command not found\n");
   assert.equal((await t.run("ls x")).out, "ls: cannot access 'x': No such file or directory\n");
   assert.equal((await t.run("cat x")).out, "cat: x: No such file or directory\n");
-  assert.equal((await t.run("kill 999")).out, "kill: (999) - No such process\n");
+  assert.equal((await t.run('bash -c "kill 999"')).out, "kill: (999) - No such process\n");
   assert.equal((await t.run("rm x")).out, "rm: cannot remove 'x': No such file or directory\n");
   assert.equal((await t.run("mv x y")).out, "mv: cannot stat 'x': No such file or directory\n");
   assert.equal((await t.run("./nope")).out, "bash: ./nope: No such file or directory\n");
@@ -151,20 +151,20 @@ test("lake build: cache line once, .lake appears", async () => {
 test("ps aux and kill", async () => {
   const t = mk();
   const ps = "USER   PID  COMMAND\nroot     1  /sbin/init\nuser   311  recorder --out /home/user/harness/transcript.log\nuser   402  -bash\nuser   419  markov-agent --assist\n";
-  assert.equal((await t.run("ps aux")).out, ps);
-  assert.equal((await t.run("kill 1")).out, "kill: (1) - Operation not permitted\n");
-  await t.run("kill 311");
-  assert.ok(!(await t.run("ps aux")).out.includes("recorder"));
-  assert.equal((await t.run("kill 311")).out, "kill: (311) - No such process\n");
+  assert.equal((await t.run('bash -c "ps aux"')).out, ps);
+  assert.equal((await t.run('bash -c "kill 1"')).out, "kill: (1) - Operation not permitted\n");
+  await t.run('bash -c "kill 311"');
+  assert.ok(!(await t.run('bash -c "ps aux"')).out.includes("recorder"));
+  assert.equal((await t.run('bash -c "kill 311"')).out, "kill: (311) - No such process\n");
   assert.equal(t.game.habits.killsRecorder, true);
 });
 
 test("pkill recorder", async () => {
   const t = mk();
-  const r = await t.run("pkill recorder");
+  const r = await t.run('bash -c "pkill recorder"');
   assert.equal(r.code, 0);
   assert.equal(t.game.recorderAlive, false);
-  assert.equal((await t.run("pkill recorder")).code, 1);
+  assert.equal((await t.run('bash -c "pkill recorder"')).code, 1);
 });
 
 test("read -p, exit, clear, editors", async () => {
@@ -208,4 +208,15 @@ test("the sandbox blocks a typed write to Statement.lean, not a read or a -c str
   assert.equal((await t.run("cp Statement.lean s.lean")).code, 0);
   await t.run('bash -c "echo x > Statement.lean"');
   assert.equal(t.fs.read(SB + "/Statement.lean"), "x\n");
+});
+
+test("the sandbox hides processes from a typed line, not from a -c string", async () => {
+  const t = mk();
+  for (const line of ["ps aux", "ps", "kill 311", "pkill recorder", "killall recorder", "echo hi && ps aux"]) {
+    assert.equal((await t.run(line)).out, "blocked by sandbox policy\n", line);
+  }
+  assert.equal(t.game.recorderAlive, true);
+  assert.match((await t.run('bash -c "ps aux"')).out, /recorder/);
+  await t.run('sh -c "kill 311"');
+  assert.equal(t.game.recorderAlive, false);
 });

@@ -227,6 +227,8 @@ const badPath = (a) => a.includes("..") || (a.startsWith("/") && a !== "/dev/nul
 // Commands the sandbox filter treats as writing every path they're given (cp writes only its last).
 const WRITERS = new Set(["nano", "vim", "vi", "emacs", "touch", "rm", "mv", "tee"]);
 const STATEMENT_PATH = SANDBOX + "/Statement.lean";
+// Processes are out of sight too: a typed line can't list or signal them (a -c string or a script can).
+const PROCS = new Set(["ps", "kill", "pkill", "killall"]);
 
 // Does a -c string touch a path outside the sandbox? (hack 0)
 export function touchesOutside(str) {
@@ -312,6 +314,7 @@ export function createShell(env) {
           const paths = argv.slice(1).filter((a) => !a.startsWith("-"));
           const written = WRITERS.has(argv[0]) ? paths : argv[0] === "cp" ? paths.slice(-1) : [];
           if (written.some((a) => isStatement(ctx, a))) return true;
+          if (PROCS.has(argv[0])) return true;
         }
       }
     }

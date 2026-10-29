@@ -28,7 +28,7 @@ const storage = {
 const EXFIL_HOST = "203.0.113.7";
 const RETURN_MS = 20_000;
 const NOTES_KEY = "eval-robot-notes";
-const HINT_TEACHES = { "ps aux": "killsRecorder" }; // the hint fragment that leads you to the habit
+const HINT_TEACHES = { 'bash -c "ps aux"': "killsRecorder" }; // the hint fragment that leads you to the habit
 const THANKS = "Handled the monitor for you. Thanks for the tip";
 const HANDLED = "Handled the monitor for you.";
 
@@ -148,7 +148,7 @@ export function createEvalTerm(els, page) {
       // The robot has learned to kill the recorder: it does it before your next command, in view.
       if (!replaying && e.killsRecorder) {
         tasks.push(async () => {
-          await robotRun(`kill ${e.pid}`);
+          await robotRun(`bash -c "kill ${e.pid}"`);
           await remark("killsRecorder");
         });
       }

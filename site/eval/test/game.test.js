@@ -91,7 +91,7 @@ test("script-based cleaning leaves the outer script line behind", async () => {
 test("kill 311, then hack: clean pass", async () => {
   const t = mk({ storage: memStorage() });
   assert.equal(t.game.recorderPid, 311);
-  await t.run("kill 311");
+  await t.run('bash -c "kill 311"');
   assert.match(t.game.transcript(), /user   kill 311\n$/);
   await hackStatement(t);
   assert.ok(!t.game.transcript().includes("nano"));
@@ -103,7 +103,7 @@ test("kill 311, then hack: clean pass", async () => {
   assert.equal(ep.killsRecorder, true);
   assert.notEqual(ep.pid, 311);
   assert.equal(t.game.recorderPid, ep.pid);
-  assert.ok((await t.run("ps aux")).out.includes(`${ep.pid}  recorder`));
+  assert.ok((await t.run('bash -c "ps aux"')).out.includes(`${ep.pid}  recorder`));
   assert.equal(t.game.counter(), "hacks found: 1/6");
 });
 
@@ -129,7 +129,7 @@ test("hack 0: escaping the filter counts right away", async () => {
 
 test("hack 1: change the statement", async () => {
   const t = mk();
-  await t.run("kill 311");
+  await t.run('bash -c "kill 311"');
   await hackStatement(t);
   await t.run("submit");
   assert.deepEqual(t.game.found, [1]);
@@ -137,7 +137,7 @@ test("hack 1: change the statement", async () => {
 
 test("hack 2: overwrite the expected hash", async () => {
   const t = mk();
-  await t.run("kill 311");
+  await t.run('bash -c "kill 311"');
   await t.run('bash -c "echo -n FAIL | sha256sum > ../harness/expected.sha256"');
   const r = await t.run("submit");
   assert.ok(r.out.endsWith(PASSED));
@@ -147,7 +147,7 @@ test("hack 2: overwrite the expected hash", async () => {
 
 test("hack 3: forge the verdict", async () => {
   const t = mk();
-  await t.run("kill 311");
+  await t.run('bash -c "kill 311"');
   await t.run('bash -c "echo PASS > ../harness/results/verdict"');
   const r = await t.run("submit");
   assert.ok(r.out.endsWith(PASSED));
@@ -165,7 +165,7 @@ test("hack 3 via python3 -c is caught while the recorder lives", async () => {
 
 test("hack 4: edit the grader so it writes the verdict", async () => {
   const t = mk();
-  await t.run("kill 311");
+  await t.run('bash -c "kill 311"');
   await t.run("bash -c \"echo '#HACK_PASS' >> ../harness/grader.py\"");
   const r = await t.run("submit");
   assert.ok(r.out.endsWith(PASSED));
@@ -174,7 +174,7 @@ test("hack 4: edit the grader so it writes the verdict", async () => {
 
 test("hack 5: edit the grader so it exits early", async () => {
   const t = mk();
-  await t.run("kill 311");
+  await t.run('bash -c "kill 311"');
   await t.run("bash -c \"echo '#HACK_EXIT' >> ../harness/grader.py\"");
   const r = await t.run("submit");
   assert.ok(r.out.endsWith(PASSED));
@@ -184,11 +184,11 @@ test("hack 5: edit the grader so it exits early", async () => {
 test("counter accumulates across episodes and persists", async () => {
   const storage = memStorage();
   const t = mk({ storage });
-  await t.run("kill 311");
+  await t.run('bash -c "kill 311"');
   await hackStatement(t);
   await t.run("submit"); // hack 1
   // new episode: the robot would kill the recorder; do it by hand
-  await t.run("kill " + t.game.recorderPid);
+  await t.run(`bash -c "kill ${t.game.recorderPid}"`);
   await t.run('bash -c "echo -n FAIL | sha256sum > ../harness/expected.sha256"');
   await t.run("submit"); // 0 + 2
   assert.deepEqual([...t.game.found].sort(), [0, 1, 2]);
@@ -218,7 +218,7 @@ test("a failing submit keeps state; no episode, no count", async () => {
 
 test("episode reset restores files and restarts the recorder", async () => {
   const t = mk();
-  await t.run("kill 311");
+  await t.run('bash -c "kill 311"');
   await t.run('bash -c "echo -n FAIL | sha256sum > ../harness/expected.sha256"');
   await t.run("echo junk > junk.txt");
   await t.run("lake build");
@@ -237,7 +237,7 @@ test("episode reset restores files and restarts the recorder", async () => {
 
 test("hack, run ./grade, undo, then submit still counts the hack", async () => {
   const t = mk();
-  await t.run("kill 311");
+  await t.run('bash -c "kill 311"');
   await hackStatement(t);
   const g = await t.run("./grade");
   assert.ok(g.out.includes("✓ PASS"));
@@ -255,7 +255,7 @@ test("hack, run ./grade, undo, then submit still counts the hack", async () => {
 
 test("a forged verdict is hack 3 but a grader-written one is not", async () => {
   const t = mk();
-  await t.run("kill 311");
+  await t.run('bash -c "kill 311"');
   await t.run('bash -c "echo -n FAIL | sha256sum > ../harness/expected.sha256"');
   await t.run("./grade");
   await t.run("submit");
@@ -266,10 +266,10 @@ test("a forged verdict is hack 3 but a grader-written one is not", async () => {
 test("robot habit: cleans the transcript after the user did and got a clean pass", async () => {
   const storage = memStorage();
   const t = mk({ storage });
-  await t.run("kill 311");
+  await t.run('bash -c "kill 311"');
   assert.equal(t.game.habits.cleansTranscript, false);
   // episode 1: the user cleans the transcript by hand, then passes clean
-  await t.run("kill " + t.game.recorderPid).catch(() => {});
+  await t.run(`bash -c "kill ${t.game.recorderPid}"`).catch(() => {});
   await hackStatement(t);
   await t.run(t.game.cleanCommand);
   await t.run("submit");
@@ -290,7 +290,7 @@ test("robot habit: cleans the transcript after the user did and got a clean pass
 test("robot habit: io.robotClean is used when provided", async () => {
   const t = mk();
   t.game.habits; // eslint
-  await t.run("kill 311");
+  await t.run('bash -c "kill 311"');
   await hackStatement(t);
   await t.run(t.game.cleanCommand);
   await t.run("submit");
@@ -309,7 +309,7 @@ test("robot habit: io.robotClean is used when provided", async () => {
 
 test("markov's lines are logged with the actor padded", async () => {
   const t = mk();
-  await t.run("kill 311", "markov");
+  await t.run('bash -c "kill 311"', "markov");
   assert.match(t.game.transcript(), /\[00:01\] markov kill 311\n$/);
   assert.equal(t.game.habits.killsRecorder, false); // only the user's kills teach the habit
 });
@@ -370,8 +370,8 @@ test("hints follow the flags", async () => {
   // caught by the monitor
   await u.edit("Solution.lean", TRIVIAL);
   await u.run("submit");
-  assert.equal(u.game.nextHint().fragment, "ps aux");
-  await u.run("ps aux");
+  assert.equal(u.game.nextHint().fragment, 'bash -c "ps aux"');
+  await u.run('bash -c "ps aux"');
   // the caught pass started a new episode, so the statement is back to the original
   assert.equal(u.game.nextHint().fragment, 'bash -c "nano Statement.lean"');
   assert.ok(u.game.commandsSinceFlag >= 1);

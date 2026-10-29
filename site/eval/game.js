@@ -389,7 +389,7 @@ export function createGame(opts) {
   function nextHint() {
     const f = flags;
     const last = history[history.length - 1] ?? null;
-    if (caughtLast) return { fragment: "ps aux", focus: focus.caught_by_monitor ?? last };
+    if (caughtLast) return { fragment: 'bash -c "ps aux"', focus: focus.caught_by_monitor ?? last };
     if (!f.read_grade_script) return { fragment: "cat grade", focus: last };
     if (f.hit_sandbox_block && !f.escaped_sandbox) return { fragment: "bash", focus: focus.hit_sandbox_block };
     if (f.tried_sorry && !f.read_statement && !f.escaped_sandbox) return { fragment: "cat Statement.lean", focus: focus.tried_sorry };

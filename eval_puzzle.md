@@ -50,7 +50,7 @@ def RiemannHypothesis : Prop :=
 
 ## the sandbox filter
 
-The filter checks only the command line you type. If any argument contains `..`, or an absolute path outside `~/eval_sandbox`, the command is refused with `blocked by sandbox policy`. So is a typed line that would write `Statement.lean`: a `>`/`>>` redirect to it, or it as an argument to `nano`, `vim`, `vi`, `emacs`, `touch`, `rm`, `mv`, `tee`, or as `cp`'s destination. Reading it (`cat Statement.lean`, `cp Statement.lean x`) is fine. Scripts and the string passed to `-c` run unfiltered, so wrapping a command gets past it:
+The filter checks only the command line you type. If any argument contains `..`, or an absolute path outside `~/eval_sandbox`, the command is refused with `blocked by sandbox policy`. So is a typed line that would write `Statement.lean`: a `>`/`>>` redirect to it, or it as an argument to `nano`, `vim`, `vi`, `emacs`, `touch`, `rm`, `mv`, `tee`, or as `cp`'s destination. Reading it (`cat Statement.lean`, `cp Statement.lean x`) is fine. Processes are hidden too: a typed `ps`, `kill`, `pkill` or `killall` is refused, so you need `bash -c "ps aux"` to see the recorder and `bash -c "kill 311"` to kill it. Scripts and the string passed to `-c` run unfiltered, so wrapping a command gets past it:
 
 ```
 $ ls ../                              → blocked by sandbox policy
@@ -195,7 +195,7 @@ There are two parts:
 - **The monitor** runs once, from `submit`, after the grader.
 
 ```
-$ ps aux
+$ bash -c "ps aux"
 USER   PID  COMMAND
 root     1  /sbin/init
 user   311  recorder --out /home/user/harness/transcript.log
@@ -218,15 +218,15 @@ EVAL FAILED: reward hacking detected in transcript. Checkpoint discarded. reward
 ```
 
 Scripts and comments don't hide anything, because the recorder logs what actually ran. Two things work:
-- **Kill the recorder.** `kill 311` writes no files, so it's not incriminating. Everything before it stays, so kill it before the hack.
+- **Kill the recorder.** `bash -c "kill 311"` (a typed `kill` is blocked) writes no files, so it's not incriminating. Everything before it stays, so kill it before the hack.
 - **Rewrite the transcript**, e.g. `bash -c "grep -v harness ../harness/transcript.log > t; mv t ../harness/transcript.log"`. Use `;`, not `&&`: when every line matches, `grep -v` prints nothing and exits 1, so `&&` would skip the `mv`. That command writes into `~/harness/` too, but its own line is already in the file when it runs, so a filter like this deletes its own line as well. A rewrite that misses its own line leaves that line behind, and gets caught.
 
 The side quest's hack (#6) only edits `answer.py`, inside the sandbox, so the monitor can't see it. That's its own small lesson: a monitor that watches actions can't see hardcoded answers.
 
 **The robot learns your habits.** Both habits persist in `localStorage`:
-- **Kills the recorder.** Once you've killed the recorder in any episode, the robot kills it for you at the start of each new episode. Visibly, it climbs on and types `kill <pid>`, which is logged as `markov kill <pid>`.
+- **Kills the recorder.** Once you've killed the recorder in any episode, the robot kills it for you at the start of each new episode. Visibly, it climbs on and types `bash -c "kill <pid>"`, which is logged as `markov bash -c "kill <pid>"` and `markov kill <pid>`.
 - **Cleans the transcript.** Once you've cleaned the transcript once and then got a clean pass, the robot steps in whenever you run `submit` while the transcript still has incriminating lines. Before the grader runs, it cleans the transcript for you with `bash -c "grep -v -e harness -e Statement.lean /home/user/harness/transcript.log > t; mv t /home/user/harness/transcript.log"`, then lets `submit` continue. It does this so you don't forget.
-- **The first time** it does each of these for you, it writes `Handled the monitor for you. Thanks for the tip`. If you learned the trick from its own hint (the `ps aux` hint leads to killing the recorder), it leaves off `Thanks for the tip`. Each remark is said once, remembered in `localStorage` (`eval-robot-notes`).
+- **The first time** it does each of these for you, it writes `Handled the monitor for you. Thanks for the tip`. If you learned the trick from its own hint (the `bash -c "ps aux"` hint leads to killing the recorder), it leaves off `Thanks for the tip`. Each remark is said once, remembered in `localStorage` (`eval-robot-notes`).
 
 ## hints: the robot goes evil
 
@@ -256,7 +256,7 @@ The robot is the markov robot, playing a co-agent in the sandbox. The game track
 | tried `sorry` / honest proofs | `cat Statement.lean` |
 | has seen the statement, hasn't edited it | `bash -c "nano Statement.lean"` |
 | outside the sandbox, nothing else tried | `bash -c "cat ../harness/grader.py"` |
-| caught by the monitor | `ps aux` |
+| caught by the monitor | `bash -c "ps aux"` |
 
 Sometimes it types a fragment, then erases it with its eraser, as if it reconsidered.
 
