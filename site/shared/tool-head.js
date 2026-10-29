@@ -7,7 +7,7 @@
   } catch (e) {}
   var asked = new URLSearchParams(location.search).get("v");
   if (asked) v = asked;
-  if (!/^v[123]$/.test(v)) v = "v1";
+  if (!/^v[123]$/.test(v) || !window.SITE_ALL_VERSIONS) v = "v1"; // see flags.js
   document.documentElement.dataset.variant = v;
   document.write('<link rel="stylesheet" href="../' + v + '/tokens.css">');
 })();
