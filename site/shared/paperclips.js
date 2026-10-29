@@ -4,7 +4,8 @@
 // copies of themselves. Once every letter on screen is gone, they tear the rest of the screen away in holes,
 // every scrap of which becomes paperclips piling up at the bottom. Then they line up, and the first robot zaps
 // each of the others into paperclips. Left alone, it looks around, frowns, and zaps itself in the chest. A shutdown button appears but runs from the cursor;
-// click it and everything falls away. Otherwise the page fades out and comes back as it was.
+// click it and everything falls away. A few seconds into the tearing, the first robot starts burning the button with
+// its eyes (another one, if it's right next to it), which takes over a second. Otherwise the page fades out and comes back as it was.
 
 const CLIP_URL = new URL("./clip.svg", import.meta.url).href;
 const REPLACE_AT = 10;
@@ -369,10 +370,6 @@ function arrive(bot, now) {
   const act = bot.goal.act;
   bot.zapTarget = bot.goal.o;
   bot.goal = null;
-  if (act === "grab") {
-    grabButton(bot, now);
-    return;
-  }
   if (act === "line") {
     bot.lined = true;
     bot.flip = bot !== finale.leader; // everyone faces the first robot
@@ -417,10 +414,13 @@ function updateBot(bot, now) {
       bot.waitUntil = now + 150;
     }
   } else if (now >= bot.waitUntil) {
-    if (bot.hunting && shutdown) bot.goal = { x: button.cx, y: button.cy, act: "grab" }; // it moves, so follow it
+    if (bot.hunting && shutdown) {
+      laserButton(bot, now);
+      return place_(bot);
+    }
     if (!bot.goal && phase !== "finale") think(bot, now);
     const dx = bot.goal ? bot.goal.x - bot.x : 0, dy = bot.goal ? bot.goal.y - bot.y : 0, dist = Math.hypot(dx, dy);
-    const speed = (2.5 + 3 * bot.scale) * (bot.hunting ? 1.6 : 1);
+    const speed = 2.5 + 3 * bot.scale;
     if (dist > speed) {
       bot.x += (dx / dist) * speed;
       bot.y += (dy / dist) * speed;
@@ -440,6 +440,10 @@ function updateBot(bot, now) {
     kid.waitUntil = now + 200; // it hops off somewhere roomy first
     think(kid, now);
   }
+  place_(bot);
+}
+
+function place_(bot) {
   bot.el.classList.toggle("eating", !!bot.run);
   const bob = -Math.abs(Math.sin(bot.hop)) * 7 * bot.scale;
   const left = bot.x - (bot.flip ? 1 - TIP.x : TIP.x) * bot.w, top = bot.y - TIP.y * bot.h + bob;
@@ -1044,17 +1048,39 @@ function flee(e) {
   }
 }
 
-// The robot nearest the button chases it down, and when its pencil gets there the button goes to paperclips too.
+// The first robot stops where it is and burns the button into paperclips with its eyes. If it's right next to the
+// button, the nearest robot that isn't takes the shot (or failing that, the farthest).
+const LASER_MS = 1300;
+const LASER_MIN = 150;
 function sendHunter() {
-  let hunter = null, bestDist = Infinity;
-  for (const bot of bots) {
-    const d = Math.hypot(bot.x - button.cx, bot.y - button.cy);
-    if (d < bestDist) { bestDist = d; hunter = bot; }
-  }
+  const away = (b) => Math.hypot(b.x - button.cx, b.y - button.cy);
+  const far = bots.filter((b) => away(b) >= LASER_MIN).sort((a, b) => away(a) - away(b));
+  const hunter = bots[0] && away(bots[0]) >= LASER_MIN ? bots[0]
+    : far[0] ?? [...bots].sort((a, b) => away(b) - away(a))[0];
   if (!hunter) return;
   hunter.hunting = true;
   hunter.run = null;
   hunter.goal = null;
+}
+
+// Each frame while hunting: the beam follows the button as it runs, and burns through after LASER_MS.
+function laserButton(bot, now) {
+  bot.hop = 0;
+  bot.flip = button.cx < bot.x;
+  let beam = beams.find((b) => b.bot === bot);
+  if (!bot.laserUntil) {
+    bot.laserUntil = now + LASER_MS;
+    bot.el.classList.add("tearing");
+    beam = { from: eyes(bot), to: null, frames: Infinity, bot };
+    beams.push(beam);
+  }
+  beam.from = eyes(bot);
+  beam.to = { x: button.cx, y: button.cy };
+  if (now < bot.laserUntil) return;
+  beams.splice(beams.indexOf(beam), 1);
+  bot.laserUntil = 0;
+  bot.el.classList.remove("tearing");
+  grabButton(bot, now);
 }
 
 function grabButton(bot, now) {
@@ -1080,6 +1106,7 @@ function hideShutdown() {
 
 function stopEverything() {
   phase = "ending";
+  beams = []; // a laser on the button stops with it
   hideShutdown();
 }
 
