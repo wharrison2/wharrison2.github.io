@@ -1,4 +1,5 @@
-// Professional or fun, picked on the first visit and remembered. Fun mode switches on the gimmicks.
+// Professional or fun, asked at the start of every visit (the last answer is remembered and comes up highlighted).
+// Fun mode switches on the gimmicks.
 // Each page sets <html data-mode> from storage in an inline script first, so the styles don't flash.
 
 const KEY = "site.mode";
@@ -8,7 +9,16 @@ function stored() {
   try { return localStorage.getItem(KEY); } catch { return null; }
 }
 
+// Once answered, the question isn't asked again until the next visit (a new tab or browser session).
+function askedThisVisit() {
+  try { return sessionStorage.getItem("mode.asked") === "1"; } catch { return false; }
+}
+function markAsked() {
+  try { sessionStorage.setItem("mode.asked", "1"); } catch { /* fine: it just asks again on the next page */ }
+}
+
 function save(mode) {
+  markAsked();
   try { localStorage.setItem(KEY, mode); } catch { /* private window: keep it for this page only */ }
   root.dataset.mode = mode;
 }
@@ -50,7 +60,7 @@ function ask() {
     if (choice === "fun") startGimmicks();
   });
   document.body.append(picker);
-  picker.querySelector("button").focus();
+  (picker.querySelector(`[data-choice="${stored()}"]`) ?? picker.querySelector("button")).focus();
 }
 
 document.addEventListener("click", (e) => {
@@ -66,12 +76,14 @@ document.addEventListener("click", (e) => {
 const asked = new URLSearchParams(location.search).get("mode");
 if (asked === "fun" || asked === "professional") save(asked);
 
-const mode = stored() ?? (asked === "fun" || asked === "professional" ? asked : null);
-if (mode === "fun" || mode === "professional") {
+const mode = stored();
+const known = mode === "fun" || mode === "professional";
+if (known && askedThisVisit()) {
   root.dataset.mode = mode;
   if (mode === "fun") startGimmicks();
 } else {
-  root.dataset.mode = "";
+  // The page keeps the last look underneath while it asks; nothing fun starts until they answer.
+  root.dataset.mode = known ? mode : "";
   ask();
 }
 labelToggles();

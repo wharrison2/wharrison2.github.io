@@ -13,7 +13,7 @@ function unlock() {
   if (!AC) return;
   ctx = new AC();
   out = ctx.createGain();
-  out.gain.value = 0.4;
+  out.gain.value = 0.6;
   const limiter = ctx.createDynamicsCompressor(); // so a big clatter doesn't clip
   out.connect(limiter).connect(ctx.destination);
 }

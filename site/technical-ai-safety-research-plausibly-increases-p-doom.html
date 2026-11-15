@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="shared/clip.svg">
+  <script src="shared/flags.js"></script>
+  <script>try{document.documentElement.dataset.mode=localStorage.getItem("site.mode")||""}catch(e){}</script>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="shared/shared.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="shared/look.js"></script>
+  <script type="module" src="shared/mode.js"></script>
+  <title>Technical AI Safety Research Plausibly Increases P(doom) Absent Vastly More Advocacy · William Harrison</title>
+</head>
+<body>
+  <div class="page">
+    <header class="side">
+      <a class="name" href="./">William<br>Harrison</a>
+      <nav>
+        <a href="./#writing" aria-current="page">Writing</a>
+        <a href="./#projects">Projects</a>
+        <a href="markov/">Markov</a>
+        <a href="qr/">QR codes</a>
+      </nav>
+    </header>
+
+    <main class="post">
+      <h1>Technical AI Safety Research Plausibly Increases P(doom) Absent Vastly More Advocacy</h1>
+      <div class="meta"><time datetime="2026-04-30">Apr 2026</time> · 5 min · <a href="https://forum.effectivealtruism.org/posts/BNLRKc4MS2mb7SzpD/technical-ai-safety-research-plausibly-increases-p-doom">EA Forum</a></div>
+<p><i>TL;DR: Safety research without regulation is optional. Cautious labs adopt it and slow down, while reckless labs don't and accelerate. The median lead lab is more reckless in the scenario with strong technical AI safety research and weak governance than in any other scenario.</i></p>
+<h3><i><strong>This post seems longer than it is. If the 4 premises below seem plausible to you, you can read just the short scenarios and get the gist</strong></i></h3>
+<h2>This post rests on the following premises:</h2>
+<p>Premise 1: Labs with greater AI capabilities will develop their capabilities more quickly than those with lesser capabilities.</p>
+<p>Premise 2: Cautious labs that adhere to higher safety standards will develop capabilities more slowly than reckless labs that adhere to lower safety standards.&nbsp;</p>
+<p>Premise 3: Reckless labs are more likely to kill us all than cautious ones.</p>
+<p>Premise 4: Absent a strong advocacy and policy branch of the AI safety movement, AI safety research will lead to uneven adoption of additional safety standards. Cautious labs will adopt more external standards than reckless labs.</p>
+<h2>If we accept all these, we quickly get a plausible narrative for how AI safety technical research backfires. It goes something like this:</h2>
+<p>At the moment, we have a handful of frontier labs, each with their own internal attitudes towards safety. Those who value safety more put models through a longer series of tests and evaluations they have developed before releasing them and, importantly, before using them to make algorithmic decisions. Those who are more lax release earlier, with fewer safety checks, and eagerly adopt their own coding tools.</p>
+<p>These differences in attitudes have resulted in <a href="https://futureoflife.org/wp-content/uploads/2025/12/AI-Safety-Index-Report_011225_TwoPager_Digital.pdf">significant safety differences</a>. They have also presented financial risks to more cautious labs — take, for example, Anthropic's recent designation as a supply chain risk, which prevents federal contractors from using their products. Although capabilities are similar across the top labs despite their safety differences, we should not expect this state of affairs to continue without strong evidence.</p>
+<h3><strong>Bad Scenario: Strong AI safety research, weak policy arm (status quo)</strong></h3>
+<p>Suppose technical AI safety researchers continue to demonstrate that additional safeguards are necessary. Without any governmental enforcement mechanism, only cautious labs agree to institute them, slowing down iteration. Reckless labs don't, and continue advancing at breakneck speeds. This magnifies the existing safety asymmetries, further disadvantaging cautious labs.</p>
+<p>As differences in capabilities emerge, two forces converge to magnify differences: investment and recursive self-improvement. Before long, reckless labs are vastly outpacing cautious ones, making them virtually obsolete.&nbsp;</p>
+<h3><strong>Mediocre Scenario: Weak AI safety research, weak policy arm</strong></h3>
+<p>Without a strong push for additional safety standards, cautious labs continue with moderately more safety checking than their reckless counterparts. The additional, internal safeguards they employ are more important on the compute margin and reduce risk without significantly slowing them down. Although they remain disadvantaged in the capabilities race, the difference is small enough that random variation and individual breakthroughs might make it up, allowing cautious labs to fight for the lead.&nbsp;</p>
+<h3>Good Scenario: Strong AI safety research, strong policy arm&nbsp;</h3>
+<p>Safety researchers and policymakers collaborate to roll out and enforce safety protocols, raising standards across the board. Labs are slowed down as they fail checks, giving safety researchers more time to solve unsolved problems. Those who try to circumvent safety checks are publicly fined, losing them market share and forcing them out of the race.</p>
+<h2><strong>Suggested Intervention</strong></h2>
+<p>Spend more on lobbying, advocacy, and policy work. Ideally, do this without cutting research budgets, but if necessary, redirect funding. Individually, consider switching to policy work and donating to AI governance organizations. Encourage your friends to do the same. Plenty of smarter people than me have made this case, so I won't go into much detail here.&nbsp;</p>
+<h2>Extra stuff</h2>
+<h3>Defense of Premises</h3>
+<p>Premise 1 seems intuitive to me. More capable models draw more investment, (probably) have better research taste, and make better algorithmic decisions. When tasked with improving themselves, more capable models will perform better.&nbsp;</p>
+<p>Premise 2 is perhaps the weakest, but I still am inclined to believe it. Safety requires compute and, when safety checks are failed, difficult, time-consuming setbacks to trace mistakes and retrain models to the same capabilities. Investors may not be convinced that safety spending is necessary, so they may prioritize investing in more reckless labs that spend more of their investments on capabilities-advancing compute which, in their view, provides better returns. Cautious labs may refuse highly profitable contracts on safety grounds, which reduces revenue and investment (see Anthropic DOD fight).&nbsp;</p>
+<p>Premise 3 seems intuitive. Reckless labs release more capable models more readily, with fewer jailbreak protections and more potential for misuse, and readily use them internally without sufficient proof of alignment, with potentially catastrophic alignment implications.&nbsp;</p>
+<p>Premise 4 is probably true, but the degree to which it is true is significant for my argument. If my defense of Premise 2 is true, then financial incentives may lead reckless labs to reject even convincing safety research. Cautious labs share these same incentives, but are insulated from them by the values and tendencies of their leaders.&nbsp;</p>
+<h3><strong>Caveats</strong></h3>
+<p>There are a number of reasons that I could be wrong, and I would love to hear them in the comments. A couple that come to mind:</p>
+<ul><li>It is plausible that AI safety research is adopted at least a little across the board, such that even the worst labs are better than the median lab would be absent external AI safety research. I think the financial incentives explained in my defense of Premise 2 make this less likely.</li>
+<li>It is plausible that investors are drawn to safe labs, since significant, public safety failures could cause other investors to go elsewhere. If this were true, though, we would expect more non-philanthropic AI safety funding, &nbsp;and investors would be pushing for stronger internal and governmental AI safety protocols. They do not seem serious about any of those things.</li>
+<li>It is plausible that safe labs develop more quickly, since sufficiently unsafe labs may eventually run into catastrophic safety failures that force them to rewind more than their safe counterparts. However, advanced misaligned AI may not reveal itself until it is too late in order to avoid these sorts of setbacks. </li>
+<li>It is plausible that the safety standards adopted by the most cautious labs do not significantly slow them down, even absent failures in unsafe labs. This may be the case if safety research makes safety testing more compute-friendly. If, however, investors choose to avoid safe labs anyway, for fear that their money is not being well-used, this caveat would not matter.</li>
+<li>It is plausible that businesses will purchase from safer labs to avoid risks like data leakage, providing cautious labs with additional revenue to scale compute, and drawing investors to cautious labs. However, business-relevant safety concerns may not be relevant to existential and suffering risks.</li>
+</ul>
+    </main>
+
+    <footer>
+      <a href="https://github.com/wharrison2">GitHub</a>
+      <a href="#">Email</a>
+      <button type="button" data-mode-toggle></button>
+    </footer>
+  </div>
+</body>
+</html>

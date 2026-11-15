@@ -72,6 +72,6 @@ def fill(page, name, lines):
     path.write_text(s[:m.start()] + block + s[m.end():], encoding="utf-8")
 
 
-fill("v1/index.html", "intro", intro())
-fill("v1/index.html", "projects", projects())
-print("content written into site/v1/index.html")
+fill("index.html", "intro", intro())
+fill("index.html", "projects", projects())
+print("content written into site/index.html")

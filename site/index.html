@@ -5,50 +5,61 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="shared/clip.svg">
   <script src="shared/flags.js"></script>
-  <script>if (!window.SITE_ALL_VERSIONS) location.replace("v1/" + location.search + location.hash);</script>
-  <title>Site versions</title>
-  <style>
-    /* A plain page for comparing the drafts; not part of the site itself. */
-    :root { --bg: #f6f6f4; --fg: #222; --muted: #666; --line: #ddd; color-scheme: light; }
-    @media (prefers-color-scheme: dark) { :root { --bg: #18181a; --fg: #e8e8e8; --muted: #999; --line: #333; color-scheme: dark; } }
-    body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui, sans-serif; }
-    main { max-width: 640px; margin: 0 auto; padding: 48px 16px; }
-    h1 { font-size: 1.4rem; margin: 0 0 24px; }
-    ol { padding: 0; list-style: none; margin: 0 0 40px; }
-    li { padding: 16px 0; border-top: 1px solid var(--line); }
-    li a { font-weight: 600; }
-    li p { margin: 4px 0 0; color: var(--muted); }
-    a { color: inherit; }
-    .more { color: var(--muted); font-size: 0.92rem; }
-    .more a { margin-right: 16px; }
-    code { white-space: nowrap; }
-    button { font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
-  </style>
+  <script>try{document.documentElement.dataset.mode=localStorage.getItem("site.mode")||""}catch(e){}</script>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="shared/shared.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="shared/look.js"></script>
+  <script type="module" src="shared/lorem.js"></script>
+  <script type="module" src="shared/mode.js"></script>
+  <title>William Harrison</title>
 </head>
 <body>
-  <main>
-    <h1>Site versions</h1>
-    <ol>
-      <li><a href="v1/">1. Index</a>
-        <p>Cool gray paper, navy ink, plum links. A book index of posts with dotted leaders, name in a sticky side column. Fun mode: highlighter on hover, a scribbled underline under the name.</p></li>
-      <li><a href="v2/">2. Margins</a>
-        <p>Sage paper, aubergine ink, brick accent. One reading column with sidenotes in the margin. Fun mode: the notes turn handwritten and crooked.</p></li>
-      <li><a href="v3/">3. Pinboard</a>
-        <p>Blush paper, berry ink, teal links. A collage of pieces in different sizes. Fun mode: sticky notes, tape and tilt; professional mode squares everything up.</p></li>
-    </ol>
-    <p class="more">
-      <a href="markov/">Markov</a>
-      <a href="qr/">QR codes</a>
-      <button type="button" id="reset">Forget my mode choice</button>
-    </p>
-    <p class="more">The Markov and QR pages take on the look of whichever version you visited last.
-      Add <code>?mode=fun</code> or <code>?mode=professional</code> to any URL to skip the question.</p>
-  </main>
-  <script>
-    document.getElementById("reset").addEventListener("click", function () {
-      try { localStorage.removeItem("site.mode"); sessionStorage.clear(); } catch (e) {}
-      this.textContent = "Forgotten";
-    });
-  </script>
+  <div class="page">
+    <header class="side">
+      <a class="name" href="./">William<br>Harrison</a>
+      <nav>
+        <a href="#writing">Writing</a>
+        <a href="#projects">Projects</a>
+        <a href="markov/">Markov</a>
+        <a href="qr/">QR codes</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="intro">
+        <!-- content:intro -->
+        <p data-lorem="s3"></p>
+        <p data-lorem="s4"></p>
+        <!-- /content:intro -->
+      </section>
+
+      <section id="writing">
+        <h2>Writing</h2>
+        <ol class="index">
+          <li><a href="openai-astra-alignment.html"><span class="title">OpenAI's Astra alignment claims are dubious and there is good evidence it is misaligned</span><span class="leader"></span><time datetime="2026-09-04">Sep 2026</time></a></li>
+          <li><a href="eas-should-be-vegan-for-ea-reasons.html"><span class="title">EAs Should be Vegan, for EA reasons</span><span class="leader"></span><time datetime="2026-07-17">Jul 2026</time></a></li>
+          <li><a href="technical-ai-safety-research-plausibly-increases-p-doom.html"><span class="title">Technical AI Safety Research Plausibly Increases P(doom) Absent Vastly More Advocacy</span><span class="leader"></span><time datetime="2026-04-30">Apr 2026</time></a></li>
+          <li><a href="scope-and-sensitivity.html"><span class="title">Scope and Sensitivity</span><span class="leader"></span><time datetime="2026-04-19">Apr 2026</time></a></li>
+        </ol>
+      </section>
+
+      <section id="projects">
+        <h2>Projects</h2>
+        <dl class="projects">
+          <!-- content:projects -->
+          <dt><a href="markov/">Markov</a></dt><dd data-lorem="s1"></dd>
+          <dt><a href="qr/">QR codes</a></dt><dd data-lorem="s1"></dd>
+          <!-- /content:projects -->
+        </dl>
+      </section>
+    </main>
+
+    <footer>
+      <a href="https://github.com/wharrison2">GitHub</a>
+      <a href="#">Email</a>
+      <button type="button" data-mode-toggle></button>
+    </footer>
+  </div>
 </body>
 </html>

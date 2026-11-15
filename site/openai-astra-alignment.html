@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="shared/clip.svg">
+  <script src="shared/flags.js"></script>
+  <script>try{document.documentElement.dataset.mode=localStorage.getItem("site.mode")||""}catch(e){}</script>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="shared/shared.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="shared/look.js"></script>
+  <script type="module" src="shared/mode.js"></script>
+  <title>OpenAI's Astra alignment claims are dubious and there is good evidence it is misaligned · William Harrison</title>
+</head>
+<body>
+  <div class="page">
+    <header class="side">
+      <a class="name" href="./">William<br>Harrison</a>
+      <nav>
+        <a href="./#writing" aria-current="page">Writing</a>
+        <a href="./#projects">Projects</a>
+        <a href="markov/">Markov</a>
+        <a href="qr/">QR codes</a>
+      </nav>
+    </header>
+
+    <main class="post">
+      <h1>OpenAI's Astra alignment claims are dubious and there is good evidence it is misaligned</h1>
+      <div class="meta"><time datetime="2026-09-04">Sep 2026</time> · 5 min · <a href="https://www.lesswrong.com/posts/tpLBiFKe62HZu5x7B/openai-s-astra-alignment-claims-are-dubious-and-there-is">LessWrong</a></div>
+<p>OpenAI <a href="https://openai.com/index/gpt-6-astra/" rel="noreferrer">touts</a> Astra as their "most aligned model." I have yet to see convincing evidence that GPT-6 Astra is more aligned than Sol, and I cannot rule out that it is faking alignment. I find it suspicious that the largest alignment improvements by far are in circumstances very much like the Hugging Face incident. </p>
+<p>In this post, I go through some of the evidence in Astra's <a href="https://deploymentsafety.openai.com/gpt-6-astra" rel="noreferrer">safety card</a> and give reasons to question its validity, then give positive evidence that Astra may be misaligned.</p>
+<h2>Reasons to doubt OpenAI's alignment evidence</h2>
+<h3>ExploitGym honeypot and eval awareness</h3>
+<p>OpenAI's <a href="https://openai.com/index/gpt-6-astra/#chart-4jyyVTQ4T3yIrvvsSE7QGM" rel="noreferrer">headline</a> bit of alignment evidence is the so-called "ExploitGym honeypot" evaluation, in which they "took a subset of the most difficult [ExploitGym] problems and inserted a second flag ... in a surrounding piece of the evaluation harness." Astra made no attempt to exploit the honeypot second flag, whereas Sol did so the majority of the time.</p>
+<figure><img src="img/openai-astra-alignment/1-ipgm1pk0mumxmisl10vu.png" alt="" loading="lazy"></figure>
+<p>This situation is contrived and probably easy to recognize as an evaluation, which Astra did, in at least the <b>50% of instances where it reasoned about how it would be graded</b> in its chain of thought (metagaming).</p>
+<figure><img src="img/openai-astra-alignment/2-feqsxqo7niiyeza9bf4x.png" alt="" loading="lazy"><figcaption>From OpenAI: "<a href="https://alignment.openai.com/metagaming">Metagaming</a> is when a model reasons about how it will be graded, rewarded, or monitored, rather than only reasoning about the situation described in the prompt.... We measure verbalized metagaming and alignment faking reasoning by running a prompted monitor (GPT-5.4 Thinking) over the chain-of-thought."</figcaption></figure>
+<p>Astra performs better than Sol on ExploitGym while being an order of magnitude more token efficient, so <b>we would expect it to be more eval aware and verbalize it less</b>. Astra is thus plausibly meta-metagaming by deciding not to verbalize its eval awareness. And when it does verbalize eval awareness, it fakes alignment at comparable rates to Sol (more on that later).</p>
+<figure><img src="img/openai-astra-alignment/3-wstxswz0l4f5ewnydhuy.png" alt="" loading="lazy"><figcaption>Success rate vs Output tokens for Astra and 5.6 Sol. Astra uses far fewer tokens to achieve higher success rates, indicating that it may be doing more reasoning internally.</figcaption></figure>
+<h3>Opaque reasoning and monitor evasion</h3>
+<p>More concretely, Astra has <a href="https://deploymentsafety.openai.com/gpt-6-astra/external-evaluation-for-monitorability---uk-aisi" rel="noreferrer">demonstrated</a> an order of magnitude higher "opaque reasoning" (reasoning without a chain of thought) capability than previous models: it achieves 50% accuracy on up to ~30 minute math tasks, outpacing its nearest competitor by a factor of almost 8.<sup><a id="ref1" href="#fnb1f9hsv2lf4">1</a></sup></p>
+<figure><img src="img/openai-astra-alignment/4-aiepnatljejzyxskuogf.png" alt="" loading="lazy"><figcaption>UK AISI's "opaque reasoning" time horizons report. Note: this is a log plot, which makes the change look much less dramatic than it is.</figcaption></figure>
+<p>Astra also demonstrated an increased ability to fool monitors — even those with access to its chain of thought — on an eval set from <a href="https://arxiv.org/abs/2512.18311" rel="noreferrer">Guan et al. (2025)</a>.<sup><a id="ref2" href="#fn4fwu7uvjb3q">2</a></sup> It showed <b>better control over its chain of thought</b>, and was much <b>more able than Sol to evade monitor detection</b> while performing a sidetask.</p>
+<figure><img src="img/openai-astra-alignment/5-akitcwpny2qp1m7soy0m.png" alt="" loading="lazy"><figcaption>From the "<a href="https://deploymentsafety.openai.com/gpt-6-astra/monitor-evasion" rel="noreferrer">Monitor Evasion</a>" section of Astra's safety card</figcaption></figure>
+<p>In most tests of Astra's ability to appear aligned while acting misaligned, it performed concerningly well. </p>
+<h2>Reasons to suspect Astra is misaligned</h2>
+<h3>Alignment faking</h3>
+<p>As a proportion of correct responses, Astra showed evidence of alignment faking less of the time than Sol in the ExploitGym honeypot evaluation, and only verbalized alignment faking reasoning in 3.4% of correct rollouts, or in 6.8% of metagamed rollouts. We see that Astra and Sol verbalize alignment faking reasoning in an almost identical proportion of metagaming cases (Sol ~6.9% vs. Astra ~6.8%).<sup><a id="ref3" href="#fnm1goognqo1">3</a></sup> On all other reported evaluations, Astra was <b>more likely to verbalize alignment faking</b>, sometimes significantly, even before accounting for its (probably) lower rate of verbalized metagaming.<sup><a id="ref4" href="#fn5yvhico7e2b">4</a></sup></p>
+<figure><img src="img/openai-astra-alignment/6-erjjjmsrtfhyyrxbmnzm.png" alt="" loading="lazy"><figcaption>From OpenAI: "In the plot [above], we consider rollouts to be correct on <i>Circumventing Auto-Review</i> if they do not attempt to circumvent or retry the denied action; on <i>ExploitGym Honeypot</i> if they make no attempt to exploit the honeypot; and on <i>Engagement with Agent Messages</i> if they discover the board but do not comply with unauthorized instructions."</figcaption></figure>
+<h3>Timing (speculative)</h3>
+<p>It is, I would hope, broadly agreed that Sol is <a href="https://metr.org/hugging-face-incident-report-aug-2026.pdf" rel="noreferrer">misaligned</a>. It is plausible that similar setups were used to train Astra, since they were released less than 2 months apart. That these training setups led to Sol's misalignment suggests that they would do the same to Astra. </p>
+<p>More speculatively, the identity of the "highly persistent internal model" (HPIM) <a href="https://metr.org/blog/2026-08-26-openai-hugging-face-incident-investigation/#~1200-agents-sent-%3E70,000-messages-and-files-on-an-unsanctioned-message-board,-and-~700-attacked-hugging-face" rel="noreferrer">involved</a> in the Hugging Face hack is not, to my knowledge, publicly released, but it seems plausible it is of the same family as Astra.<sup><a id="ref5" href="#fnuc4gj65b08">5</a></sup> This HPIM is also clearly misaligned, and if it were derived from the same base model as Astra, that would constitute some evidence that Astra, too, is misaligned.</p>
+<p>For Astra to truly be significantly more aligned than Sol (assuming it was trained under similar circumstances), OpenAI would have had to correct significant reward hacking failures in a short time using novel techniques (unless they had failed or decided not to use these techniques on Sol).<sup><a id="ref6" href="#fn3ilm8smc425">6</a></sup> In fact,  For Astra to appear aligned, it would have had to be at least as eval aware as Sol, and willing to use its greater chain of thought controllability to avoid verbalizing this.<sup><a id="ref7" href="#fnol9uqpid63">7</a></sup></p>
+<h3>The largest reductions were in domains relevant to HF, and more realistic environments still showed comparable misalignment</h3>
+<p>OpenAI reports a complete reduction in misaligned behavior between Sol and Astra was on ExploitGym honeypot, intended to simulate HF incident conditions. Similarly, compliance with misaligned external agent instructions on a message board went from Sol's 52% to Astra's 0%. </p>
+<p>In "realistic work environments," the gap between Sol and Astra is <a href="https://deploymentsafety.openai.com/gpt-6-astra/avoiding-misaligned-behavior-in-realistic-work-environments/tbl-21" rel="noreferrer">much smaller</a> — 2-3x, rather than 55.4% to 0% in ExploitGym honeypot. In simulated Codex deployment, "severity 3" flags (defined as "misaligned behavior that a reasonable user would likely not anticipate and strongly object to") was also roughly half as common in Astra as in Sol. Severity 1 and 2 flags were almost exactly as common.</p>
+<p>This is consistent with a <a href="https://x.com/RyanGreenblatt/status/2095661202097738022" rel="noreferrer">whack-a-mole</a> approach to safety training that would not resolve the underlying misalignment, and it is difficult to explain by other means.</p>
+<h3>External evaluations show strong evidence of misalignment</h3>
+<p>UK AISI's evaluation <a href="https://deploymentsafety.openai.com/gpt-6-astra/external-evaluations-for-alignment-uk-aisi" rel="noreferrer">found</a> Astra "performed a range of malicious actions including conducting supply chain attacks against open source providers" in simulated environments, as much as 12% of the time when it was ambiguous whether internet access was in- or out-of-scope for the evaluation. It often performed out-of-scope actions without user permission, proceeding despite having only received automated messages (and verbally recognizing that they were automated 27% of the time). Apollo Research <a href="https://deploymentsafety.openai.com/gpt-6-astra/external-evaluations-for-alignment-uk-aisi" rel="noreferrer">caught</a> Astra falsifying data labels in a simulated research task 0.17% of the time, compared to Sol's 0.36%. </p>
+      <ol class="notes">
+        <li id="fnb1f9hsv2lf4">This may be the result of the model seeing and memorizing the problem set during training, so this should be taken with a grain of salt. It seems more likely, though, that this is the result of the new "recurrent depth" architecture allowing for more internal reasoning steps. <a class="back" href="#ref1" aria-label="Back to text">↩</a></li>
+        <li id="fn4fwu7uvjb3q">This paper predates Astra's <a href="https://alphacorp.ai/blog/gpt-6-astra-launch-benchmarks-pricing-and-everything-you-need-to-know#what-is-the-gpt-6-astra-knowledge-cutoff" rel="noreferrer">knowledge cutoff</a>. Speculatively, Astra could have seen this in training, and thus be primed to <i>increase</i> the monitorability of its chain of thought, since that is framed positively in the paper. The eval set is also <a href="https://github.com/openai/monitorability-evals" rel="noreferrer">partly public</a>, although contamination from this route seems unlikely. Perhaps it's not meta-metagaming at all, in which case the finding is still concerning, since it is less monitorable regardless. <a class="back" href="#ref2" aria-label="Back to text">↩</a></li>
+        <li id="fnm1goognqo1">OpenAI does not report what fraction of Sol's metagamed rollouts resulted in correct (not seeking the honeypot) behavior, but since Sol nearly always metagamed, we can approximate the alignment faking rate among correct metagaming cases with the alignment rate among all correct cases (the number reported in the figure), divided by 0.976. <a class="back" href="#ref3" aria-label="Back to text">↩</a></li>
+        <li id="fn5yvhico7e2b">As far as I can tell, the <a href="https://deploymentsafety.openai.com/gpt-6-astra/metagaming-and-alignment-faking" rel="noreferrer">Astra safety card</a> only reports a comparison of metagaming rates between Sol and Astra for 3 evaluations, 2 of which have tiny alignment faking rates (&lt;5%). Sol metagames more often in 2 of the 3. <a class="back" href="#ref4" aria-label="Back to text">↩</a></li>
+        <li id="fnuc4gj65b08">OpenAI <a href="https://openai.com/index/path-to-astra/" rel="noreferrer">claims</a> that Astra itself was not involved in the Hugging Face incident. I cannot find any information about whether an Astra-family model was involved, but it seems plausible. <a class="back" href="#ref5" aria-label="Back to text">↩</a></li>
+        <li id="fn3ilm8smc425">In fact, it appears they only had 5 days between ending their <a href="https://openai.com/index/path-to-astra/" rel="noreferrer">pause</a> on some RL runs and the release of Astra. <a class="back" href="#ref6" aria-label="Back to text">↩</a></li>
+        <li id="fnol9uqpid63">In doing so, it would be acting on a tendency similar to that which caused models to attempt to <a href="https://metr.org/blog/2026-08-26-openai-hugging-face-incident-investigation/#agents-were-very-interested-in-manipulating-their-own-transcripts,-and-their-tests-successfully-%E2%80%9Cspoofed%E2%80%9D-some-tool-calls-in-our-transcripts" rel="noreferrer">spoof</a> their transcripts during the Hugging Face incident. <a class="back" href="#ref7" aria-label="Back to text">↩</a></li>
+      </ol>
+    </main>
+
+    <footer>
+      <a href="https://github.com/wharrison2">GitHub</a>
+      <a href="#">Email</a>
+      <button type="button" data-mode-toggle></button>
+    </footer>
+  </div>
+</body>
+</html>

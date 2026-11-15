@@ -48,7 +48,7 @@ document.querySelectorAll(".projects dt").forEach((dt) => {
   });
 });
 
-const links = [...document.querySelectorAll("footer a[href]")].filter((a) => a.getAttribute("href") !== "#" && !a.hasAttribute("data-versions"));
+const links = [...document.querySelectorAll("footer a[href]")].filter((a) => a.getAttribute("href") !== "#");
 if (links.length) {
   add(HOME + "/links.txt", {
     render: async () => doc(...links.map((a) => {

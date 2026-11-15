@@ -8,9 +8,9 @@ Comments like this one never appear on the site.
 -->
 
 ## Markov
-link: ../markov/
+link: markov/
 
 
 ## QR codes
-link: ../qr/
+link: qr/
 

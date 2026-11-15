@@ -28,7 +28,7 @@
     chosen[o.key] = v;
     if (v) {
       root.dataset[o.key] = v;
-      document.write('<link rel="stylesheet" href="' + base + "v1/" + o.dir + "/" + v + '.css">');
+      document.write('<link rel="stylesheet" href="' + base + o.dir + "/" + v + '.css">');
     }
   });
   if (!window.SITE_LOOK_PICKER) return;
