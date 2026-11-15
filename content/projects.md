@@ -14,3 +14,7 @@ link: markov/
 ## QR codes
 link: qr/
 
+
+## Transcription detector
+link: transcription/
+Type a few sentences and a model guesses, from your keystroke timing alone, whether you're writing your own words or copying someone else's. A class project, about 77% accurate.

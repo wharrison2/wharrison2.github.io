@@ -1,16 +1,15 @@
-// Sync, in <head> after the page's own stylesheets: alternate looks (palette and type) and layouts for v1.
+// Sync, in <head> after the page's own stylesheets: alternate looks (palette and type) and layouts.
 // With SITE_LOOK_PICKER off (flags.js), every page uses each option's default (the settled design).
 // With it on, ?look=<name> and ?layout=<name> pick one and remember it; an empty value (?look=) goes back to the
 // original, and a small bar in the bottom-left corner switches between them.
-// Layouts only apply to v1's own pages; the tool pages have their own arrangement.
+// Layouts only apply to the site's own pages; the tool pages have their own arrangement.
 (function () {
   var OPTIONS = [
     { key: "look", dir: "looks", names: ["clay", "clay-newsreader", "clay-source", "clay-mixed"], tools: true, def: "clay-source" },
     { key: "layout", dir: "layouts", names: ["spine", "timeline", "poster", "frontpage", "letter"], tools: false, def: "" },
   ];
   var root = document.documentElement;
-  var onTool = !!root.dataset.variant;           // tool-head.js sets it; v1's pages don't
-  if (onTool && root.dataset.variant !== "v1") return; // only v1 has looks
+  var onTool = "tool" in root.dataset; // tool-head.js marks the tool pages
   var base = document.currentScript.src.replace(/shared\/look\.js(\?.*)?$/, "");
   var q = new URLSearchParams(location.search);
   var chosen = {};

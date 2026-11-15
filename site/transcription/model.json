@@ -1,0 +1,80 @@
+{
+ "features": [
+  "proportion_spent_paused",
+  "deletion_rate",
+  "chars_per_burst",
+  "pause_len_stddev"
+ ],
+ "mean": [
+  0.11274,
+  0.05636,
+  150.90606,
+  635.11752
+ ],
+ "std": [
+  0.12478,
+  0.04658,
+  106.05417,
+  870.09422
+ ],
+ "coef": [
+  -1.58842,
+  -0.69861,
+  -0.21754,
+  -0.06097
+ ],
+ "intercept": 0.05869,
+ "accuracy": 0.771,
+ "n": 232,
+ "maxGapMs": 7000,
+ "quartiles": {
+  "proportion_spent_paused": {
+   "natural": [
+    0.08716,
+    0.16574,
+    0.26351
+   ],
+   "transcribed": [
+    0.0,
+    0.03206,
+    0.08225
+   ]
+  },
+  "deletion_rate": {
+   "natural": [
+    0.03562,
+    0.06855,
+    0.11644
+   ],
+   "transcribed": [
+    0.01829,
+    0.03169,
+    0.05294
+   ]
+  },
+  "chars_per_burst": {
+   "natural": [
+    43.88889,
+    67.25,
+    122.25
+   ],
+   "transcribed": [
+    96.33333,
+    162.0,
+    297.0
+   ]
+  },
+  "pause_len_stddev": {
+   "natural": [
+    289.97485,
+    905.7177,
+    1852.42834
+   ],
+   "transcribed": [
+    0.0,
+    0.0,
+    240.25
+   ]
+  }
+ }
+}

@@ -1,5 +1,5 @@
 /* The desk: a terminal, with a small robot that walks along it writing with its pencil.
-   The terminal is ink-on-paper inverted: v1's navy as the screen and its paper gray as the text. */
+   The terminal is ink-on-paper inverted: the site's navy as the screen and its paper gray as the text. */
 .desk {
   position: relative; margin-top: 48px;
   --term-bg: var(--fg); --term-fg: var(--bg);
