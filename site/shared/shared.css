@@ -70,14 +70,13 @@
 
 /* Holes torn in the page: a light ragged edge of paper around a dark void. */
 .pc-tears { position: absolute; left: 0; top: 0; overflow: visible; transition: opacity 1s ease; }
-/* The void is stroked in its own colour so it reaches 4px past the outline, closing any gap between holes whose
-   points are all torn; the rim is wider again, so 3.5px of torn edge still shows around the outside. */
+/* The void is stroked in its own colour so it reaches 1px past the outline; the rim is wider, so about 2.5px of torn edge shows around it. */
 .pc-rims polygon {
-  fill: none; stroke: color-mix(in srgb, var(--surface) 55%, #fff); stroke-width: 15; stroke-linejoin: round;
+  fill: none; stroke: color-mix(in srgb, var(--surface) 55%, #fff); stroke-width: 7; stroke-linejoin: miter; stroke-miterlimit: 2;
 }
 .pc-voids polygon {
   fill: color-mix(in srgb, var(--bg) 22%, #000);
-  stroke: color-mix(in srgb, var(--bg) 22%, #000); stroke-width: 8; stroke-linejoin: round;
+  stroke: color-mix(in srgb, var(--bg) 22%, #000); stroke-width: 2; stroke-linejoin: miter; stroke-miterlimit: 2;
 }
 
 /* The robots: small red-eyed copies of the one on the Markov page. */
@@ -108,7 +107,6 @@
 /* While they're at it, nothing on the page can be clicked, hovered or selected, except the clips and the shutdown button. */
 html.pc-busy body { -webkit-user-select: none; user-select: none; }
 html.pc-busy body *:not(.pc-clip, .pc-shutdown, .mugging, .mugging *) { pointer-events: none; }
-html.pc-fade body { opacity: 0; transition: opacity 1.2s ease; }
 html body { transition: opacity 0.8s ease; }
 
 @keyframes pc-pop { from { transform: scale(0); } }

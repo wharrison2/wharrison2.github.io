@@ -1,15 +1,17 @@
 // Fun mode: now and then a paperclip bounces along the bottom of the screen, settles, and fades away.
-// Clicking a clip duplicates it. After 10 clicks, a little red-eyed Markov robot turns up and starts eating the
-// page: each letter it pokes pops out as a paperclip and falls. After 15 clicks (or a while), robots bud smaller
+// Clicking a clip duplicates it. After 5 clicks, a little red-eyed Markov robot turns up and starts eating the
+// page: each letter it pokes pops out as a paperclip and falls. After 8 clicks (or a while), robots bud smaller
 // copies of themselves. Once every letter on screen is gone, they tear the rest of the screen away in holes,
-// every scrap of which becomes paperclips piling up at the bottom. Then they line up, and the first robot zaps
+// every scrap on screen of which becomes paperclips piling up at the bottom; the rest of the document, above and below, is torn away unseen. Then they line up, and the first robot zaps
 // each of the others into paperclips. Left alone, it looks around, frowns, and zaps itself in the chest. A shutdown button appears but runs from the cursor;
-// click it and everything falls away. A few seconds into the tearing, the first robot starts burning the button with
-// its eyes (another one, if it's right next to it), which takes over a second. Otherwise the page fades out and comes back as it was.
+// click it and everything falls away. At the end (either way) every paperclip drops off the bottom of the screen, and then the page comes back. A few seconds into the tearing, the first robot starts burning the button with
+// its eyes (another one, if it's right next to it), which takes over a second.
+
+import * as sfx from "./sfx.js";
 
 const CLIP_URL = new URL("./clip.svg", import.meta.url).href;
-const REPLACE_AT = 10;
-const SWARM_AT = 15;
+const REPLACE_AT = 5;
+const SWARM_AT = 8;
 const GRAVITY = 0.45;
 const CLIP_W = 14, CLIP_H = 36;
 const INERTIA = (CLIP_W ** 2 + CLIP_H ** 2) / 12; // per unit mass, as a flat rectangle
@@ -71,6 +73,7 @@ function poke(clip) {
   clip.vx += (Math.random() - 0.5) * 4;
   clip.va += (Math.random() - 0.5) * 20;
   clip.onFloor = false;
+  sfx.ping();
   spawn(clip.x, clip.y - 4, (Math.random() - 0.5) * 9, -7 - Math.random() * 4);
   if (clicks >= REPLACE_AT && phase === "idle" && !held()) startReplacing();
   if (clicks >= SWARM_AT && phase === "replacing") startSwarm();
@@ -114,25 +117,39 @@ function bounce(c, p) {
 function step(now) {
   for (let i = live.length - 1; i >= 0; i--) {
     const c = live[i];
-    const ground = surfaceAt(c.x) - FLOOR_GAP; // the floor, or the top of the pile
+    // The pile is a wall sideways, not a ramp: a clip can't slide or bounce into a spot where it's higher than the
+    // clip's lowest point, so nothing gets carried up the heap.
+    const ox = c.x, bottom = c.y + (c.onFloor ? CLIP_W / 2 : lowestPoint(c.angle).y);
     c.vy += GRAVITY;
     c.x += c.vx;
     c.y += c.vy;
     c.angle += c.va;
+    if (!c.falling && c.onFloor && surfaceAt(c.x) - FLOOR_GAP < bottom - 2) {
+      c.x = ox;
+      c.vx = -c.vx * 0.3;
+    }
+    const ground = surfaceAt(c.x) - FLOOR_GAP; // the floor, or the top of the pile
     if (!c.falling) {
       if (c.onFloor) {
-        c.y = ground - CLIP_W / 2;
+        // Lying still. If the pile builds up around it, it stays where it is, half buried, rather than riding up.
+        c.y -= c.vy;
         c.vy = 0;
         c.vx *= SLIDE;
+        if (ground - CLIP_W / 2 > c.y + 3) c.onFloor = false; // the ground fell away: it drops again
+        else if (ground - CLIP_W / 2 > c.y) c.y = ground - CLIP_W / 2;
       } else {
         const p = lowestPoint(c.angle);
-        if (c.y + p.y > ground) {
-          c.y = ground - p.y;
+        // If the pile has risen round it, the ground it stands on is where its lowest point already was, not the top
+        // of the pile, so it isn't lifted out; it still bounces, pivots and topples over as usual.
+        const floor = c.vy >= 0 ? Math.max(ground, c.y - c.vy + p.y) : ground;
+        if (c.y + p.y > floor) {
+          c.y = floor - p.y;
+          if (c.vy > 2.5) sfx.clink(c.vy / 10);
           bounce(c, p);
           // Nearly flat and nearly still: lie down.
           const flat = flatAngle(c.angle);
           if (Math.abs(c.angle - flat) < 5 && Math.abs(c.va) < 1.5 && Math.abs(c.vy) < 1) {
-            Object.assign(c, { angle: flat, va: 0, vy: 0, y: ground - CLIP_W / 2, onFloor: true });
+            Object.assign(c, { angle: flat, va: 0, vy: 0, y: floor - CLIP_W / 2, onFloor: true });
           }
         }
       }
@@ -144,8 +161,8 @@ function step(now) {
       const resting = c.onFloor && Math.abs(c.vx) < 0.05;
       if (resting && !c.settledAt) c.settledAt = now;
       if (!resting) c.settledAt = 0;
-      // A settled clip fades after a while, unless someone has been playing with them.
-      if (phase === "idle" && c.settledAt && now - c.settledAt > 5000 && now - lastPoke > 5000) {
+      // A settled clip fades after a while (15s), unless someone has been playing with them.
+      if (phase === "idle" && c.settledAt && now - c.settledAt > 15000 && now - lastPoke > 15000) {
         remove(c, i, true);
         continue;
       }
@@ -190,6 +207,7 @@ const wrapped = []; // { node, span, chars: [char spans], left: Set of indexes n
 let textTargets = [];
 let bots = []; // { el, x, y, scale, w, h, goal, run, tear, waitUntil, hop, flip, nextClone, hunting, lined }
 let replaceStarted = 0;
+let offscreenTorn = false; // the rest of the document (outside the window) has been torn away
 let tearStarted = 0; // when the last letter on screen went
 let ended = false;
 let visibleText = []; // targets with letters still on screen
@@ -261,6 +279,7 @@ function spawnBot(x, y, scale) {
   const el = document.createElement("div");
   el.className = "pc-bot";
   el.innerHTML = BOT_SVG;
+  sfx.blip();
   const w = BOT_W * scale;
   el.style.width = `${w}px`;
   layer.append(el);
@@ -310,6 +329,7 @@ function eatLetter(entry, k) {
   entry.left.delete(k);
   entry.chars[k].classList.add("pc-gone");
   if (!q.w) return;
+  sfx.nibble();
   popClip(q.x - scrollX, q.y - scrollY, clamp(q.h * 1.1, 14, 30), q.w * q.h,
     (Math.random() - 0.5) * 1.5, -2 - Math.random() * 2.5);
 }
@@ -529,6 +549,7 @@ function startZap(bot, o, now) {
   bot.flip = r.left + r.width / 2 < bot.x;
   bot.el.classList.add("tearing");
   beams.push({ from: eyes(bot), to: { x: r.left + r.width / 2, y: r.top + r.height / 2 }, frames: Math.round(ZAP_MS / 16), bot });
+  sfx.zap();
 }
 
 function finishZap(bot) {
@@ -562,10 +583,11 @@ tears.append(rims, voids);
 // The page is tracked as a lattice of points this far apart (document coordinates). A hole tears every point
 // inside its outline, and its dark void is drawn a few pixels wider than that outline (see .pc-voids), so where
 // every point is torn there is no gap left between holes for the page to show through.
+const GROW = 3; // px the torn outline is pushed outwards (the lattice is DOT apart, so this closes the gaps)
 const DOT = 5;
 const DOT_CLIP = 0.125; // chance a torn point on screen pops out as a clip: one per 200px²
 const ENDGAME = 600; // with fewer untorn points than this on screen, robots are sent to what's left
-const holes = []; // { cx, cy, R, radii, h, rim, hole }
+const holes = []; // { cx, cy, R, shape, h, rim, hole }
 let lattice = null; // 1 where torn
 let latticeCols = 0, latticeRows = 0;
 let openDots = new Int32Array(0); // untorn points on screen, as lattice indexes, refreshed every few frames
@@ -590,22 +612,41 @@ function sizeTears() {
   tears.setAttribute("height", document.documentElement.scrollHeight);
 }
 
+// A torn-out chunk: a handful of uneven corners at random angles and radii, squashed to a random aspect ratio and
+// turned, with every edge broken once or twice into a zigzag. Returns flat [x, y, ...] in units of R (so within about 1).
+function tornShape() {
+  const k = 6 + Math.floor(Math.random() * 6);
+  const angles = Array.from({ length: k }, (_, i) => ((i + Math.random() * 0.8) / k) * Math.PI * 2); // uneven, but never a big gap
+  const squash = 0.4 + Math.random() * 0.6, turn = Math.random() * Math.PI;
+  const cs = Math.cos(turn), sn = Math.sin(turn);
+  const corners = angles.map((a, i) => {
+    const rad = (i % 2 ? 0.55 : 0.8) + Math.random() * 0.3;
+    const x = Math.cos(a) * rad, y = Math.sin(a) * rad * squash;
+    return [x * cs - y * sn, x * sn + y * cs];
+  });
+  const out = [];
+  for (let i = 0; i < k; i++) {
+    const [x0, y0] = corners[i], [x1, y1] = corners[(i + 1) % k];
+    out.push(x0, y0);
+    const len = Math.hypot(x1 - x0, y1 - y0), splits = 1 + Math.floor(Math.random() * 3);
+    for (let m = 1; m <= splits; m++) {
+      const f = (m + (Math.random() - 0.5) * 0.5) / (splits + 1), off = (Math.random() - 0.5) * len * 0.32;
+      out.push(x0 + (x1 - x0) * f - ((y1 - y0) / len) * off, y0 + (y1 - y0) * f + ((x1 - x0) / len) * off);
+    }
+  }
+  return out;
+}
+
 function startTear(bot, now) {
   const accel = Math.min(3, 1 + (now - tearStarted) / 15_000);
-  const R = (26 + Math.random() * 34) * (0.55 + bot.scale * 0.9) * accel;
-  const N = 40;
-  const p = [0, 0, 0].map(() => Math.random() * 7);
-  const radii = Array.from({ length: N }, (_, i) => {
-    const t = (i / N) * Math.PI * 2;
-    const wobble = 0.16 * Math.sin(2 * t + p[0]) + 0.1 * Math.sin(3 * t + p[1]) + 0.07 * Math.sin(5 * t + p[2]);
-    const fibres = (i % 2 ? 0.07 : -0.07) + (Math.random() - 0.5) * 0.1;
-    return 0.85 + wobble + fibres;
-  });
+  const R = (30 + Math.random() * 42) * (0.55 + bot.scale * 0.9) * accel;
+  const shape = tornShape();
   const rim = document.createElementNS(SVG_NS, "polygon");
   const hole = document.createElementNS(SVG_NS, "polygon");
   rims.append(rim);
   voids.append(hole);
-  const tear = { cx: bot.x + scrollX, cy: bot.y + scrollY, R, radii, h: 0, rim, hole };
+  const tear = { cx: bot.x + scrollX, cy: bot.y + scrollY, R, shape, h: 0, rim, hole };
+  sfx.rip(Math.min(1, R / 120));
   holes.push(tear);
   return tear;
 }
@@ -613,13 +654,13 @@ function startTear(bot, now) {
 function growTear(t) {
   t.h = Math.min(1, t.h + 0.04);
   const r = t.R * (1 - (1 - t.h) ** 2); // rips fast, then slows
-  const n = t.radii.length;
+  const n = t.shape.length / 2;
   const xs = new Float64Array(n), ys = new Float64Array(n);
   let points = "";
   for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2;
-    xs[i] = t.cx + Math.cos(a) * t.radii[i] * r;
-    ys[i] = t.cy + Math.sin(a) * t.radii[i] * r;
+    const dx = t.shape[2 * i] * r, dy = t.shape[2 * i + 1] * r, d = Math.hypot(dx, dy) || 1;
+    xs[i] = t.cx + dx + (dx / d) * GROW; // a little past the true outline, so thin strokes still leave no gap
+    ys[i] = t.cy + dy + (dy / d) * GROW;
     points += `${xs[i].toFixed(1)},${ys[i].toFixed(1)} `;
   }
   t.rim.setAttribute("points", points);
@@ -657,6 +698,42 @@ function tearDots(t, xs, ys) {
   }
 }
 
+// The rest of the document, above, below and beside the window, is torn away in one go once the window is bare:
+// nobody can see it fall, so it is simply gone, as ragged chunks tiled over it (no clips, no animation).
+function tearOffscreen() {
+  const W = document.documentElement.scrollWidth, H = document.documentElement.scrollHeight;
+  const x0 = scrollX, x1 = scrollX + innerWidth, y0 = scrollY, y1 = scrollY + innerHeight;
+  const regions = [[0, 0, W, y0], [0, y1, W, H], [0, y0, x0, y1], [x1, y0, W, y1]];
+  const CELL = 280, M = 30, JIT = 18;
+  const clampX = (x) => clamp(x, 0, W), clampY = (y) => clamp(y, 0, H);
+  for (const [ax, ay, bx, by] of regions) {
+    if (bx - ax < 1 || by - ay < 1) continue;
+    for (let y = ay; y < by; y += CELL) {
+      for (let x = ax; x < bx; x += CELL) {
+        // This cell, grown by M each way so neighbours overlap, with a ragged edge that only ever moves inwards by JIT.
+        const l = x - M, t = y - M, r = Math.min(x + CELL, bx) + M, b = Math.min(y + CELL, by) + M;
+        const pts = [];
+        const steps = (a, z) => Math.max(2, Math.round((z - a) / 70));
+        const nx = steps(l, r), ny = steps(t, b);
+        const j = () => Math.random() * JIT;
+        for (let i = 0; i < nx; i++) pts.push([l + ((r - l) * i) / nx, t + j()]);
+        for (let i = 0; i < ny; i++) pts.push([r - j(), t + ((b - t) * i) / ny]);
+        for (let i = 0; i < nx; i++) pts.push([r - ((r - l) * i) / nx, b - j()]);
+        for (let i = 0; i < ny; i++) pts.push([l + j(), b - ((b - t) * i) / ny]);
+        const points = pts.map(([px, py]) => `${clampX(px).toFixed(1)},${clampY(py).toFixed(1)}`).join(" ");
+        for (const parent of [rims, voids]) {
+          const poly = document.createElementNS(SVG_NS, "polygon");
+          poly.setAttribute("points", points);
+          parent.append(poly);
+        }
+      }
+    }
+    for (let row = Math.max(0, Math.floor(ay / DOT)); row <= Math.min(latticeRows - 1, Math.ceil(by / DOT)); row++) {
+      for (let col = Math.max(0, Math.floor(ax / DOT)); col <= Math.min(latticeCols - 1, Math.ceil(bx / DOT)); col++) lattice[row * latticeCols + col] = 1;
+    }
+  }
+}
+
 // Every untorn point on screen, right out to the edges.
 function refreshOpen() {
   const c0 = clamp(Math.floor(scrollX / DOT), 0, latticeCols - 1), c1 = clamp(Math.ceil((scrollX + innerWidth) / DOT), 0, latticeCols - 1);
@@ -672,11 +749,10 @@ function refreshOpen() {
 // ---------- Loose clips and the pile ----------
 
 // Loose clips fly and land on a pile at the bottom of the screen. The pile grows by the area each clip came
-// from, packed tighter and tighter as it rises, so it never gets much past the bottom quarter of the screen.
-// Three canvases, bottom to top: the pile's shading (redrawn only when the pile changes), the clips that have
+// from, so by the time the page is all torn away, the screen is full of paperclips.
+// Two canvases, bottom to top: the clips that have
 // landed (each drawn once), and the clips in the air (redrawn every frame).
-const [fillCanvas, pileCanvas, canvas] = [0, 1, 2].map(() => Object.assign(document.createElement("canvas"), { className: "pc-pile" }));
-const fillCtx = fillCanvas.getContext("2d");
+const [pileCanvas, canvas] = [0, 1].map(() => Object.assign(document.createElement("canvas"), { className: "pc-pile" }));
 const pileCtx = pileCanvas.getContext("2d");
 const ctx = canvas.getContext("2d");
 const beamCanvas = Object.assign(document.createElement("canvas"), { className: "pc-pile pc-beam" }); // over the robots
@@ -686,10 +762,6 @@ let pileDirty = false;
 const sprite = new Image();
 sprite.src = CLIP_URL;
 const COL = 4; // pile height is kept per column this wide
-const MAX_STEP = 3; // steepest the pile can be between neighbouring columns
-const PILE_FILL = "rgb(127 135 144 / 0.22)";
-const PACK = 0.15; // pile height per unit of area torn, before it's squashed down
-const PILE_MAX = 0.28; // the pile levels off at this fraction of the screen height
 let debris = []; // { x, y, vx, vy, a, va, s, area, age, bounced }
 let settled = [];
 let falling = []; // everything dropping off the screen after a shutdown
@@ -697,7 +769,7 @@ let heights = null;
 
 function resizeCanvas() {
   dpr = devicePixelRatio || 1;
-  for (const [c, g] of [[fillCanvas, fillCtx], [pileCanvas, pileCtx], [canvas, ctx], [beamCanvas, beamCtx]]) {
+  for (const [c, g] of [[pileCanvas, pileCtx], [canvas, ctx], [beamCanvas, beamCtx]]) {
     c.width = innerWidth * dpr;
     c.height = innerHeight * dpr;
     c.style.width = `${innerWidth}px`;
@@ -727,77 +799,139 @@ function draw(g, c) {
 }
 
 function popClip(x, y, s, area, vx, vy) {
-  debris.push({ x, y, vx, vy, a: Math.random() * Math.PI * 2, va: (Math.random() - 0.5) * 0.3, s, area, age: 0, bounced: false });
+  debris.push({ x, y, vx, vy, a: Math.random() * Math.PI * 2, va: (Math.random() - 0.5) * 0.12, s, area, age: 0, bounced: false });
 }
 
+const PILE_CAP = 0.4; // the pile thins out as it nears this fraction of the screen, so it stays a heap at the bottom
+
+// The torn-off clips get the same rigid-body treatment as the loose ones (a capsule that bounces off its lowest
+// point, pivots and topples), scaled to their size, and once lying down they slide along the slope of the heap.
+// Each one only costs anything until it comes to rest; then it's drawn into the pile canvas for good.
 function stepDebris() {
   for (let i = debris.length - 1; i >= 0; i--) {
     const d = debris[i];
     d.age += 1;
-    d.vy += GRAVITY;
-    d.x += d.vx;
-    d.y += d.vy;
-    d.a += d.va;
-    if (d.x < 6 || d.x > innerWidth - 6) {
-      d.vx = -d.vx * 0.5;
-      d.x = clamp(d.x, 6, innerWidth - 6);
-    }
-    const ground = surfaceAt(d.x) - d.s * 0.15;
-    if (d.y < ground) continue;
-    d.y = ground;
-    if (d.vy > 4 && !d.bounced) {
-      d.bounced = true;
-      d.vy *= -0.3;
-      d.vx *= 0.6;
-      d.va *= -0.6;
-      continue;
-    }
+    if (stepBody(d) && d.age < 600) continue;
     debris[i] = debris[debris.length - 1];
     debris.pop();
     settle(d);
   }
 }
 
-function settle(d) {
-  d.age = 99; // full size, even if it landed mid-pop
-  d.a = Math.PI / 2 + (Math.random() - 0.5) * 0.9 + (Math.random() < 0.5 ? 0 : Math.PI);
-  // It rolls into the lowest spot nearby, so the pile fills in evenly, right up against the walls.
-  const at = clamp(Math.floor(d.x / COL), 0, heights.length - 1);
-  let low = at;
-  for (let i = Math.max(0, at - 12); i <= Math.min(heights.length - 1, at + 12); i++) if (heights[i] < heights[low]) low = i;
-  // Where it's nearly as high as it goes, it tumbles down to wherever is still lowest.
-  const cap = innerHeight * PILE_MAX;
-  if (heights[low] > cap * 0.85) for (let i = 0; i < heights.length; i++) if (heights[i] < heights[low]) low = i;
-  d.x = clamp((low + 0.5) * COL, 6, innerWidth - 6);
-  d.y = surfaceAt(d.x) - d.s * 0.15;
-  settled.push(d);
-  draw(pileCtx, d);
-  pileDirty = true;
-  const span = Math.max(1, Math.round((d.s * 0.8) / COL));
-  const first = Math.floor(d.x / COL) - (span >> 1);
-  for (let i = first; i < first + span; i++) {
-    if (heights[i] !== undefined) heights[i] += (d.area * PACK * Math.max(0, 1 - heights[i] / cap)) / (span * COL);
+const slopeAt = (x) => (surfaceAt(x + 10) - surfaceAt(x - 10)) / 20; // >0: the ground falls away to the right
+const PILE_FRICTION = 0.82; // per-frame drag on a clip sliding over the heap
+const REPOSE = 0.6; // the steepest slope (about 30°) a clip will stay put on
+// A lying clip's angle: along the heap under it, plus the tilt it came down with.
+const layAlong = (d) => d.flat + Math.atan(slopeAt(d.x)) * 0.7 + d.tilt;
+
+// One frame of physics for a clip in the air or sliding. Returns false once it has come to rest.
+function stepBody(d) {
+  const W = (d.s * CLIP_W) / CLIP_H, half = (d.s - W) / 2, I = (W * W + d.s * d.s) / 12;
+  const lowest = (a) => {
+    const co = Math.cos(a), k = co >= 0 ? 1 : -1;
+    return { y: k * half * co + W / 2, x: 2 * half * Math.abs(co) < 1.5 ? 0 : -k * half * Math.sin(a) };
+  };
+  const groundAt = (x) => surfaceAt(x) - d.s * 0.05;
+  // Sideways, the heap is a wall, not a ramp: a clip can't move into a spot where the heap is above its lowest point,
+  // so nothing gets pushed up the slope. It knocks against it instead.
+  const bottom = d.y + (d.lying ? W / 2 : lowest(d.a).y);
+  const ox = d.x;
+  d.x = clamp(d.x + d.vx, 6, innerWidth - 6);
+  const blocked = d.x !== ox + d.vx || groundAt(d.x) < bottom - 2;
+  if (blocked) {
+    d.x = ox;
+    d.vx = -d.vx * 0.3;
   }
-  slump(first - 30, first + span + 30);
+  const ground = groundAt(d.x);
+  if (d.lying) {
+    // Lying on the heap: gravity pulls it down the slope and the clips under it drag on it, hard. On a gentle slope
+    // it grips and doesn't start sliding at all. It lies along the slope, with a bit of a tilt of its own.
+    const slope = slopeAt(d.x);
+    const pull = Math.abs(slope) > 0.25 ? (GRAVITY * slope) / (1 + slope * slope) : 0;
+    d.vx = (d.vx + pull) * PILE_FRICTION;
+    // Steeper than a heap can stand: it keeps going downhill, so gullies and dips between heaps fill in.
+    if (Math.abs(slope) > REPOSE) d.vx = Math.sign(slope) * Math.max(Math.abs(d.vx), 0.8);
+    d.a = layAlong(d);
+    if (ground - W / 2 > d.y + 3) { d.lying = false; return true; } // ran off an edge: falling again
+    if (ground - W / 2 < d.y) return false; // the heap has built up under it: it's buried where it lies
+    if (blocked) return false; // slid up against a clip it can't get over: it stops there
+    d.y = ground - W / 2;
+    return Math.abs(d.vx) > 0.15 || Math.abs(slopeAt(d.x)) > REPOSE;
+  }
+  const flat = Math.PI / 2 + Math.PI * Math.round((d.a - Math.PI / 2) / Math.PI);
+  if (d.toppling) {
+    // Resting on one end and falling over like a stick pivoting on that end: slow to start, then quicker, then flat.
+    const dir = Math.sign(flat - d.a) || 1;
+    const lean = Math.max(Math.cos(d.a - flat), 0.3); // how far it's leaned from upright (sin of that angle)
+    d.va = dir * (Math.abs(d.va) + (1.5 * GRAVITY * lean) / d.s);
+    const pivot = d.x + lowest(d.a).x, base = groundAt(pivot);
+    d.a += d.va;
+    if (Math.sign(flat - d.a) !== dir) {
+      Object.assign(d, { lying: true, flat, toppling: false, va: 0, vx: d.va * W * 0.5, vy: 0, tilt: (Math.random() - 0.5) * 0.3 });
+      d.a = layAlong(d);
+      d.y = groundAt(d.x) - W / 2;
+      return true;
+    }
+    d.x = clamp(pivot - lowest(d.a).x, 6, innerWidth - 6);
+    d.y = base - lowest(d.a).y;
+    return true;
+  }
+  d.vy += GRAVITY;
+  d.y += d.vy;
+  d.a += d.va;
+  const { x: px, y: py } = lowest(d.a);
+  if (d.y + py <= ground) return true;
+  d.y = ground - py;
+  const vpy = d.vy + d.va * px;
+  if (vpy > 1) {
+    if (vpy > 3) sfx.clink(vpy / 14);
+    // A real bounce. Only part of the knock becomes spin, and never much: a bent wire tumbles, it doesn't whirl.
+    const j = (-(1 + RESTITUTION * 0.6) * vpy) / (1 + (px * px) / I);
+    const vpx = d.vx - d.va * py;
+    const limit = FRICTION * -j;
+    const jt = clamp(-vpx / (1 + (py * py) / I), -limit, limit);
+    d.vy += j;
+    d.vx += jt;
+    d.va = clamp((d.va + ((px * j - py * jt) / I) * 0.35) * CONTACT_DAMPING, -0.08, 0.08);
+    return true;
+  }
+  // Too slow to bounce: if it's already about flat it lies down, otherwise it falls over onto its side.
+  if (Math.abs(d.a - flat) < 0.09) {
+    Object.assign(d, { lying: true, flat, va: 0, vy: 0, y: ground - W / 2, tilt: (Math.random() - 0.5) * 0.3 });
+    d.a = layAlong(d);
+  } else {
+    Object.assign(d, { toppling: true, vx: 0, vy: 0, va: Math.sign(flat - d.a) === Math.sign(d.va) ? d.va : 0 });
+  }
+  return true;
 }
 
-function slump(from, to) {
-  from = Math.max(0, from);
-  to = Math.min(heights.length - 1, to);
-  for (let pass = 0; pass < 4; pass++) {
-    for (let i = from; i < to; i++) {
-      const diff = heights[i] - heights[i + 1];
-      if (Math.abs(diff) <= MAX_STEP) continue;
-      const move = (diff - Math.sign(diff) * MAX_STEP) / 2;
-      heights[i] -= move;
-      heights[i + 1] += move;
-    }
+function settle(d) {
+  d.age = 99; // full size, even if it landed mid-pop
+  settled.push(d);
+  draw(pileCtx, d);
+  // The heap rises in a low hump under the clip, only across the width it actually covers, and nowhere else: clips nest
+  // into each other, so not by their full thickness. A hollow under a clip that's lying across it isn't sealed over,
+  // so later clips drop into it and fill it in, rather than resting on nothing and leaving holes.
+  const W = (d.s * CLIP_W) / CLIP_H, half = (Math.abs(Math.sin(d.a)) * (d.s - W) + W) / 2;
+  const i0 = Math.floor((d.x - half) / COL), i1 = Math.floor((d.x + half) / COL);
+  const centre = clamp(Math.floor(d.x / COL), 0, heights.length - 1);
+  const full = heights[centre] / (innerHeight * PILE_CAP);
+  const rise = W * 0.45 * Math.max(0.1, 1 - full * full);
+  // It only raises the heap above where it actually is: one that ended up buried (the heap rose round it while it
+  // was still sliding, as happens when lots fall at once) adds nothing on top, or the surface would float above
+  // the clips drawn there and leave a gap under the next ones.
+  const base = innerHeight - d.y - W / 2; // the height of the clip's underside
+  for (let i = i0; i <= i1; i++) {
+    if (heights[i] === undefined) continue;
+    const edge = 1 - Math.abs(i - (i0 + i1) / 2) / ((i1 - i0) / 2 + 1); // a hump, highest under the middle
+    heights[i] = Math.max(heights[i], Math.min(heights[i], base) + rise * edge);
   }
 }
 
 function stepFalling() {
   falling = falling.filter((c) => c.y < innerHeight + 40);
   for (const c of falling) {
+    if (c.delay > 0) { c.delay -= 1; continue; }
     c.vy += GRAVITY;
     c.x += c.vx;
     c.y += c.vy;
@@ -806,16 +940,6 @@ function stepFalling() {
 }
 
 function render() {
-  if (pileDirty && heights) {
-    pileDirty = false;
-    fillCtx.clearRect(0, 0, innerWidth, innerHeight);
-    fillCtx.fillStyle = PILE_FILL;
-    fillCtx.beginPath();
-    fillCtx.moveTo(0, innerHeight);
-    for (let i = 0; i < heights.length; i++) fillCtx.lineTo(i * COL, innerHeight - heights[i] + 8);
-    fillCtx.lineTo(innerWidth, innerHeight);
-    fillCtx.fill();
-  }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, innerWidth, innerHeight);
   for (const d of debris) draw(ctx, d);
@@ -849,7 +973,7 @@ function startReplacing(at = null) {
   replaceStarted = performance.now();
   collectTargets();
   collectObjects();
-  layer.prepend(fillCanvas, pileCanvas, canvas, beamCanvas);
+  layer.prepend(pileCanvas, canvas, beamCanvas);
   resizeCanvas();
   addEventListener("resize", resizeCanvas);
   pageLayer.append(tears);
@@ -898,6 +1022,7 @@ function tick(now) {
     // A few seconds into the tearing, one robot goes after the shutdown button.
     if (phase === "swarming" && tearStarted && now - tearStarted > 3000 && shutdown && !bots.some((b) => b.hunting)) sendHunter();
     for (const bot of [...bots]) updateBot(bot, now);
+    if (phase === "swarming" && tearStarted && !openCount && !offscreenTorn) { offscreenTorn = true; tearOffscreen(); }
     if (phase === "swarming" && tearStarted && !openCount && !shutdown && !bots.some((b) => b.tear)) startFinale(now);
     if (phase === "finale") stepFinale(now);
   }
@@ -962,6 +1087,7 @@ function stepFinale(now) {
     const victim = f.queue.shift();
     if (victim) {
       beams.push({ from: eyes(f.leader), to: botPoint(victim, 60, 80), frames: 10 });
+      sfx.zap();
       burst(victim);
       f.gap = Math.max(160, f.gap * 0.85);
       f.next = now + f.gap;
@@ -979,6 +1105,7 @@ function stepFinale(now) {
         [600, () => me.el.querySelector(".mouth").setAttribute("d", "M52 65 Q60 57 68 65")],
         [1200, () => {
           beams.push({ from: eyes(me), to: botPoint(me, 60, 104), frames: 16 });
+          sfx.zap();
           me.el.classList.add("tearing");
         }],
         [260, (t) => {
@@ -1073,6 +1200,7 @@ function laserButton(bot, now) {
     bot.el.classList.add("tearing");
     beam = { from: eyes(bot), to: null, frames: Infinity, bot };
     beams.push(beam);
+    sfx.burn(LASER_MS / 1000);
   }
   beam.from = eyes(bot);
   beam.to = { x: button.cx, y: button.cy };
@@ -1131,12 +1259,13 @@ function resetState() {
   settled = [];
   falling = [];
   heights = null;
-  for (const c of [fillCanvas, pileCanvas, canvas, beamCanvas]) c.remove();
+  for (const c of [pileCanvas, canvas, beamCanvas]) c.remove();
   beamCtx.clearRect(0, 0, innerWidth, innerHeight);
   removeEventListener("resize", resizeCanvas);
   clicks = 0;
   ended = false;
   tearStarted = 0;
+  offscreenTorn = false;
   visibleText = [];
   finale = null;
   beams = [];
@@ -1161,22 +1290,34 @@ export function invadeFrom(x, y) {
   return done;
 }
 
+// Both endings are the same: every clip (the pile, the ones in the air, the loose ones) and every robot drops off the
+// bottom of the screen with a little stagger and spin, and only once they're all gone do the holes fade away and the
+// page come back underneath.
 function shutDown() {
+  fallAway();
+}
+
+function fadeAndReset() {
+  fallAway();
+}
+
+function fallAway() {
   stopEverything();
-  // Everything drops off the bottom of the screen, the holes close up, and the letters come back.
+  sfx.spill();
   for (const c of live) {
     c.falling = true;
     c.vy = -2 - Math.random() * 3;
     c.vx = (Math.random() - 0.5) * 3;
   }
   // The top of the pile is all you can see of it; a few thousand falling is plenty.
-  falling = [...settled.slice(-3000), ...debris].map((c) => ({
-    ...c, age: 99, vy: -Math.random() * 4, vx: (Math.random() - 0.5) * 3, spin: (Math.random() - 0.5) * 0.2,
+  // Every clip falls from exactly where it is; the ones on top of the heap let go a little before those under them.
+  falling = [...settled, ...debris].map((c) => ({
+    ...c, age: 99, vy: -Math.random() * 1.5, vx: (Math.random() - 0.5) * 2, spin: (Math.random() - 0.5) * 0.15,
+    delay: reduceMotion ? 0 : Math.random() * 25 + Math.max(0, c.y - (innerHeight - 200)) * 0.06,
   }));
   settled = [];
   debris = [];
   heights.fill(0);
-  pileDirty = true;
   pileCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
   pileCtx.clearRect(0, 0, innerWidth, innerHeight);
   for (const bot of bots) {
@@ -1184,27 +1325,20 @@ function shutDown() {
     bot.el.style.transitionDelay = `${Math.random() * 0.3}s`;
     bot.el.style.transform += ` translateY(${innerHeight + 200}px) rotate(${(Math.random() - 0.5) * 90}deg)`;
   }
-  tears.style.opacity = "0";
-  for (const o of objects) setTimeout(() => o.el.classList.remove("pc-zapped"), Math.random() * 700);
-  wrapped.forEach(({ chars }) => chars.forEach((c) => {
-    if (c.classList.contains("pc-gone")) setTimeout(() => c.classList.remove("pc-gone"), Math.random() * 700);
-  }));
   run();
   invade();
-  setTimeout(() => {
+  const started = performance.now();
+  const gone = () => {
+    const bots_ = bots.some((b) => b.el.isConnected && performance.now() - started < 2500);
+    if ((falling.length || live.length || bots_) && performance.now() - started < 6000) return setTimeout(gone, 100);
+    // Nothing left in the air: the holes fade away, and the page is back underneath them.
     restorePage();
-    resetState();
-  }, reduceMotion ? 300 : 1800);
-}
-
-function fadeAndReset() {
-  stopEverything();
-  document.documentElement.classList.add("pc-fade");
-  setTimeout(() => {
-    restorePage();
-    resetState();
-    document.documentElement.classList.remove("pc-fade");
-  }, 1400);
+    tears.style.opacity = "0";
+    for (const o of objects) o.el.classList.remove("pc-zapped");
+    wrapped.forEach(({ chars }) => chars.forEach((c) => c.classList.remove("pc-gone")));
+    setTimeout(resetState, reduceMotion ? 100 : 1100);
+  };
+  setTimeout(gone, reduceMotion ? 100 : 600);
 }
 
 // ?paperclips sends the first one right away instead of after several seconds.
