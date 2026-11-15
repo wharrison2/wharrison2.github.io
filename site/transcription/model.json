@@ -1,32 +1,30 @@
 {
  "features": [
   "proportion_spent_paused",
-  "deletion_rate",
-  "chars_per_burst",
-  "pause_len_stddev"
+  "backspace_runs",
+  "backspace_run_length"
  ],
  "mean": [
   0.11274,
-  0.05636,
-  150.90606,
-  635.11752
+  2.35212,
+  2.25513
  ],
  "std": [
   0.12478,
-  0.04658,
-  106.05417,
-  870.09422
+  1.48186,
+  1.01251
  ],
  "coef": [
-  -1.58842,
-  -0.69861,
-  -0.21754,
-  -0.06097
+  -1.41816,
+  -0.39171,
+  -0.49679
  ],
- "intercept": 0.05869,
- "accuracy": 0.771,
+ "intercept": 0.14125,
+ "accuracy": 0.767,
  "n": 232,
  "maxGapMs": 7000,
+ "backspaceRunMs": 500,
+ "maxRun": 15,
  "quartiles": {
   "proportion_spent_paused": {
    "natural": [
@@ -40,40 +38,28 @@
     0.08225
    ]
   },
-  "deletion_rate": {
+  "backspace_runs": {
    "natural": [
-    0.03562,
-    0.06855,
-    0.11644
+    1.76257,
+    2.50627,
+    3.8392
    ],
    "transcribed": [
-    0.01829,
-    0.03169,
-    0.05294
+    0.99668,
+    1.76678,
+    2.44755
    ]
   },
-  "chars_per_burst": {
+  "backspace_run_length": {
    "natural": [
-    43.88889,
-    67.25,
-    122.25
+    1.82051,
+    2.4,
+    3.0
    ],
    "transcribed": [
-    96.33333,
-    162.0,
-    297.0
-   ]
-  },
-  "pause_len_stddev": {
-   "natural": [
-    289.97485,
-    905.7177,
-    1852.42834
-   ],
-   "transcribed": [
-    0.0,
-    0.0,
-    240.25
+    1.42857,
+    1.85714,
+    2.25
    ]
   }
  }

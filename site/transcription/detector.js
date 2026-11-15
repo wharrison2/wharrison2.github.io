@@ -36,16 +36,14 @@ const pickNew = (items, current) => {
 // How each feature is shown. Scales run from 0 to `max` (in the feature's own units).
 const SHOW = {
   proportion_spent_paused: { name: "Time spent paused", fmt: (v) => `${Math.round(v * 100)}%`, max: 0.5 },
-  deletion_rate: { name: "Deletions", fmt: (v) => `${Math.round(v * 100)} per 100 keys`, max: 0.2 },
-  chars_per_burst: { name: "Keys between pauses", fmt: (v) => `${Math.round(v)}`, max: 400 },
-  pause_len_stddev: { name: "How much pauses vary", fmt: (v) => `${(v / 1000).toFixed(1)} s`, max: 5000 },
+  backspace_runs: { name: "Times you went back to delete", fmt: (v) => `${v.toFixed(1)} per 100 keys`, max: 8 },
+  backspace_run_length: { name: "Keys deleted each time", fmt: (v) => v.toFixed(1), max: 6 },
 };
 
 // ---------- the features, as in parse_json.py ----------
 
 const addsChar = (s) => s.type !== "keyup" && s.key.length === 1;
 const mean = (a) => a.reduce((x, y) => x + y, 0) / a.length;
-const std = (a) => { if (!a.length) return 0; const m = mean(a); return Math.sqrt(mean(a.map((x) => (x - m) ** 2))); };
 
 // No gap between keystrokes counts for more than model.maxGapMs (later times shift earlier), as in training:
 // one long think shouldn't outweigh everything else.
@@ -58,26 +56,36 @@ function capGaps(keystrokes) {
   });
 }
 
-function features(raw) {
-  const keystrokes = capGaps(raw);
+// With `now`, the pause you're in the middle of counts too, so time spent paused climbs while you wait.
+function features(raw, now) {
+  const keystrokes = capGaps(now === undefined ? raw : [...raw, { type: "now", key: "", code: "", t: now }]);
+  const nowT = now === undefined ? null : keystrokes.pop().t; // capped like any other gap
   const chars = keystrokes.filter(addsChar);
   if (chars.length < 2) return null;
   const gaps = chars.slice(1).map((s, i) => s.t - chars[i].t);
+  let end = chars[chars.length - 1].t;
+  if (nowT !== null && nowT - end > MIN_PAUSE_LENGTH_MS) { gaps.push(nowT - end); end = nowT; }
   const pauses = gaps.filter((g) => g > MIN_PAUSE_LENGTH_MS);
-  const total = chars[chars.length - 1].t - keystrokes[0].t;
-  const deleted = keystrokes.filter((s) => s.type !== "keyup" && s.code === "Backspace").length;
+  const total = end - keystrokes[0].t;
 
-  let inds = gaps.map((g, i) => (g > MIN_PAUSE_LENGTH_MS ? i : -1)).filter((i) => i >= 0);
-  inds.push(chars.length);
-  if (inds[0] !== 0) inds.unshift(0);
-  const bursts = inds.slice(1).map((v, i) => v - inds[i]);
+  // Runs of backspacing: back to back, or within model.backspaceRunMs of the last backspace even with other
+  // keys between. (The study's own version counted each run after the first one short.) Highlighting text and
+  // deleting it counts as a run as long as the selection; the study didn't record selections. No run counts for
+  // more than model.maxRun characters.
+  const down = keystrokes.filter((s) => s.type === "keydown");
+  const bs = down.map((s, i) => (s.code === "Backspace" || (s.code === "Delete" && s.selected) ? i : -1)).filter((i) => i >= 0);
+  const runs = [];
+  bs.forEach((b, k) => {
+    const a = bs[k - 1], size = down[b].selected || 1;
+    if (k && (b - a === 1 || down[b].t - down[a].t < model.backspaceRunMs)) runs[runs.length - 1] += size;
+    else runs.push(size);
+  });
+  for (let i = 0; i < runs.length; i++) runs[i] = Math.min(runs[i], model.maxRun);
 
   return {
     proportion_spent_paused: total > 0 ? pauses.reduce((a, b) => a + b, 0) / total : 0,
-    deletion_rate: deleted / chars.length,
-    characters_per_second: total > 0 ? chars.length / (total / 1000) : 0,
-    chars_per_burst: mean(bursts),
-    pause_len_stddev: pauses.length > 1 ? std(pauses) : 0,
+    backspace_runs: (100 * runs.length) / chars.length,
+    backspace_run_length: runs.length ? mean(runs) : 0,
   };
 }
 
@@ -122,6 +130,7 @@ function reset() {
   }
   log = [];
   stretches = [];
+  hovered = -1;
   clearTimeout(pauseTimer);
   input.value = "";
   lastValue = "";
@@ -131,7 +140,8 @@ function reset() {
 }
 
 function logEvent(e, type) {
-  log.push({ type, key: e.key, code: e.code, t: performance.now(), cursor: input.selectionStart, text_length: input.value.length, shift: e.shiftKey });
+  log.push({ type, key: e.key, code: e.code, t: performance.now(), cursor: input.selectionStart, text_length: input.value.length, shift: e.shiftKey,
+    selected: input.selectionEnd - input.selectionStart });
   restartPause();
   schedule();
 }
@@ -151,9 +161,9 @@ const wordsIn = (text) => text.trim().split(/\s+/).filter(Boolean).length;
 function endStretch() {
   clearTimeout(pauseTimer);
   const start = openStart(), end = input.value.length;
-  const f = features(log);
+  const f = features(log, performance.now()); // what the panel showed as it ended, the closing pause included
   if (!f || wordsIn(input.value.slice(start, end)) < EARLY_WORDS) return;
-  stretches.push({ start, end, p: predict(f).p });
+  stretches.push({ start, end, f, p: predict(f).p });
   log = [];
   update();
 }
@@ -186,6 +196,7 @@ input.addEventListener("input", () => {
     // Everything deleted: start over from nothing, as New question does (but keep the question).
     log = [];
     stretches = [];
+    hovered = -1;
     lastValue = "";
     clearTimeout(pauseTimer);
   } else {
@@ -204,13 +215,12 @@ function drawMarks() {
   let html = "", at = 0;
   for (const st of stretches) {
     html += esc(text.slice(at, st.start));
-    const pc = Math.round(st.p * 100);
-    html += `<mark style="background:${tint(st.p)}" title="${pc}% copied">${esc(text.slice(st.start, st.end))}</mark>`;
+    const i = stretches.indexOf(st);
+    html += `<mark data-i="${i}"${i === hovered ? ' class="on"' : ""} style="background:${tint(st.p)}">${esc(text.slice(st.start, st.end))}</mark>`;
     at = st.end;
   }
   $("marks").innerHTML = html + esc(text.slice(at)) + "\n"; // the newline keeps a trailing empty line the same height
   $("marks").scrollTop = input.scrollTop;
-  $("stretch-key").hidden = !stretches.length;
 }
 
 let pending = false;
@@ -238,10 +248,18 @@ function update() {
   drawMarks();
   const words = wordsIn(input.value.slice(openStart()));
   $("count").textContent = (stretches.length ? "This stretch: " : "") + `${words} word${words === 1 ? "" : "s"}`;
-  const f = features(log);
+  renderPanel();
+}
+
+// The side panel shows the stretch being typed now, or an earlier one while the pointer is over it.
+function renderPanel() {
+  const st = stretches[hovered];
+  const words = wordsIn(input.value.slice(st ? st.start : openStart(), st ? st.end : undefined));
+  const f = st ? st.f : features(log, performance.now());
+  const earlier = st ? "Earlier stretch: " : "";
   const verdict = document.querySelector(".verdict");
   if (!f || words < EARLY_WORDS) {
-    verdict.classList.remove("ready");
+    verdict.classList.remove("ready", "past");
     $("call").textContent = words ? "Keep going" : stretches.length ? "New estimate" : "Waiting for typing";
     $("prob").textContent = "It needs a few sentences, about 30 words, to say much.";
     $("meter").style.width = "50%";
@@ -251,10 +269,11 @@ function update() {
   const { p, push } = predict(f);
   const ready = words >= READY_WORDS;
   verdict.classList.toggle("ready", ready);
+  verdict.classList.toggle("past", !!st);
   $("meter").style.width = `${(p * 100).toFixed(1)}%`;
   const copied = p >= 0.5;
   const sure = Math.abs(p - 0.5) * 2;
-  $("call").textContent = (ready ? "" : "Early guess: ") + (copied ? "Looks copied" : "Looks like your own words") + (sure < 0.2 ? "?" : "");
+  $("call").textContent = earlier + (ready ? "" : "Early guess: ") + (copied ? "Looks copied" : "Looks like your own words") + (sure < 0.2 ? "?" : "");
   const right = copied === (task === "transcription");
   $("prob").textContent = `${Math.round((copied ? p : 1 - p) * 100)}% sure. ` +
     (ready ? (right ? "That's right." : "That's wrong, as it is about a quarter of the time.") : `It gets more reliable around ${READY_WORDS} words.`);
@@ -267,6 +286,28 @@ function update() {
     r.push.textContent = Math.abs(s) < 0.15 ? "doesn't say much either way" : s > 0 ? "points to copied" : "points to your own words";
   }
 }
+
+// Pointing at a shaded stretch shows its numbers. The highlights sit under the textarea, so find which one the
+// pointer is over from where they are drawn.
+let hovered = -1;
+function setHovered(i) {
+  if (i === hovered) return;
+  hovered = i;
+  document.querySelectorAll("#marks mark").forEach((m) => m.classList.toggle("on", Number(m.dataset.i) === i));
+  renderPanel();
+}
+input.addEventListener("mousemove", (e) => {
+  let over = -1;
+  for (const m of document.querySelectorAll("#marks mark")) {
+    for (const r of m.getClientRects()) {
+      if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) over = Number(m.dataset.i);
+    }
+  }
+  setHovered(over);
+});
+input.addEventListener("mouseleave", () => setHovered(-1));
+// While you're between keystrokes, keep the current stretch's numbers live.
+setInterval(() => { if (log.length && hovered < 0) renderPanel(); }, 250);
 
 document.querySelectorAll("[data-task]").forEach((b) => b.addEventListener("click", () => setTask(b.dataset.task)));
 $("reset").addEventListener("click", reset);

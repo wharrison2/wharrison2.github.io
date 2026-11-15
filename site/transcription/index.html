@@ -54,9 +54,6 @@
             <span id="note" class="note"></span>
             <button type="button" class="btn quiet" id="reset">New question</button>
           </div>
-          <p class="stretch-key" id="stretch-key" hidden>Pause for 10 seconds and it starts a fresh estimate. Earlier stretches
-            are shaded by what it made of them: <span class="swatch own"></span>your own words to
-            <span class="swatch copied"></span>copied.</p>
         </section>
 
         <aside class="verdict" aria-live="polite">
@@ -81,7 +78,7 @@
           which makes them unreliable and unfair to non-native English speakers. This one looks only at the process:
           the timing of your keystrokes, your pauses and your deletions.</p>
         <p>For the study, people typed about 50 words twice: once writing freely and once copying a Wikipedia passage,
-          in random order. A logistic regression on four features of their keystroke logs tells the two apart
+          in random order. A logistic regression on three features of their keystroke logs (time spent paused, how often they went back to delete, and how much they deleted each time) tells the two apart
           <span id="accuracy">about 77%</span> of the time on held-out typing. People writing their own words pause to think
           and go back to fix things; people copying type in long, steady bursts. Most of its mistakes are calling
           rushed, careless writing copied.</p>
