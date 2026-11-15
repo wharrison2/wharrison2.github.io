@@ -1,11 +1,6 @@
 /* Pieces every version uses: the mode picker, the mugging popup, the paperclips.
    Each version's tokens.css supplies the colors and fonts. */
 
-/* ---------- Fun-only links ---------- */
-
-/* Links to things that are only for fun mode (the QR code maker) are hidden otherwise. */
-html:not([data-mode="fun"]) [data-fun-only]:not([aria-current]) { display: none; }
-
 /* ---------- Mode picker ---------- */
 
 .mode-picker {

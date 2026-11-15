@@ -12,6 +12,7 @@ last_name = "Harrison"
 writing = "Writing"
 projects = "Projects"
 markov = "Markov"
+# Only in the QR page's own menu: the page is hidden from the rest of the site
 qr = "QR codes"
 transcription = "Transcription"
 
