@@ -7,3 +7,4 @@ markov/corpus/
 __pycache__/
 .DS_Store
 /*.md
+post_dump

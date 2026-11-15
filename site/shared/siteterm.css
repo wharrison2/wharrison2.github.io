@@ -1,0 +1,92 @@
+/* Fun mode's home page: the site as a terminal (siteterm.js). Ink-on-paper inverted, in whichever look is loaded. */
+.tt {
+  --t-bg: var(--fg); --t-fg: var(--bg);
+  --t-dim: color-mix(in srgb, var(--bg) 55%, var(--fg));
+  --t-accent: color-mix(in srgb, var(--accent) 45%, var(--bg));
+  --t-edge: color-mix(in srgb, var(--fg) 86%, var(--bg));
+  max-width: 920px; margin: 0 auto; padding: 60px 16px 24px; /* the top clears the view toggle */
+}
+.tt[hidden] { display: none; }
+@media (prefers-color-scheme: dark) {
+  .tt {
+    --t-bg: color-mix(in srgb, var(--bg) 62%, #000); --t-fg: var(--fg);
+    --t-dim: var(--muted); --t-accent: var(--accent); --t-edge: var(--line);
+  }
+}
+.tt-window {
+  display: flex; flex-direction: column; height: calc(100vh - 60px - 24px); min-height: 360px;
+  height: calc(100dvh - 60px - 24px);
+  background: var(--t-bg); color: var(--t-fg); border: 1px solid var(--t-edge); border-radius: 8px;
+  box-shadow: 0 18px 40px -26px rgb(0 0 0 / 0.55); overflow: hidden;
+}
+.tt-bar {
+  display: flex; align-items: center; gap: 6px; flex: none; padding: 9px 12px; border-bottom: 1px solid var(--t-edge);
+  font: 12px/1 var(--font-mono); color: var(--t-dim); user-select: none;
+}
+.tt-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--t-edge); }
+.tt-bar i:first-child { background: color-mix(in srgb, var(--accent) 70%, var(--t-bg)); }
+.tt-bar span { flex: 1; text-align: center; margin-right: 48px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tt-screen {
+  flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 14px 18px 18px;
+  font: 14.5px/1.65 var(--font-mono); cursor: text; overflow-wrap: anywhere;
+}
+.tt-o { white-space: pre-wrap; }
+.tt-cmd { margin-top: 6px; }
+.tt-ps1 { color: var(--t-accent); white-space: pre; }
+.tt-dim { color: var(--t-dim); }
+.tt-err { color: color-mix(in srgb, #e5484d 60%, var(--t-fg)); }
+.tt-line { display: flex; align-items: baseline; margin-top: 6px; cursor: text; }
+.tt-input {
+  flex: 1; min-width: 0; padding: 0; border: 0; outline: none; background: none;
+  font: inherit; color: var(--t-fg); caret-color: var(--t-accent);
+}
+.tt a { color: var(--t-accent); text-underline-offset: 3px; }
+.tt-name {
+  font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left;
+  text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--t-fg) 30%, transparent); text-underline-offset: 3px;
+}
+.tt-name:hover, .tt-name:focus-visible { color: var(--t-accent); text-decoration-color: currentColor; outline: none; }
+.tt-dir { color: var(--t-accent); font-weight: 600; }
+.tt-ls { display: flex; flex-wrap: wrap; gap: 2px 28px; white-space: normal; }
+
+/* A file or post being read: proportioned like the terminal, but laid out to read. */
+.tt-doc { white-space: normal; max-width: 72ch; margin: 6px 0 4px; }
+.tt-doc p, .tt-doc ul, .tt-doc ol, .tt-doc blockquote { margin: 0 0 0.9em; }
+.tt-doc h1, .tt-doc h2, .tt-doc h3, .tt-doc h4, .tt-doc .tt-h, .tt-doc .tt-notes { font: 700 1em/1.5 var(--font-mono); margin: 1.4em 0 0.6em; color: var(--t-fg); }
+.tt-doc h1 { margin-top: 0.4em; }
+.tt-doc h1::before { content: "# "; color: var(--t-accent); }
+.tt-doc h2::before, .tt-doc .tt-notes::before { content: "## "; color: var(--t-accent); }
+.tt-doc h3::before { content: "### "; color: var(--t-accent); }
+.tt-doc h4::before { content: "#### "; color: var(--t-accent); }
+.tt-doc .tt-h { margin-top: 0; }
+.tt-doc b, .tt-doc strong { font-weight: 700; color: var(--t-fg); }
+.tt-doc i, .tt-doc em { font-style: italic; }
+.tt-doc blockquote { padding-left: 1.5ch; border-left: 2px solid var(--t-accent); color: var(--t-dim); }
+.tt-doc ul, .tt-doc ol { padding-left: 3ch; }
+.tt-doc sup { line-height: 0; font-size: 0.75em; }
+.tt-doc .tt-fig { color: var(--t-dim); }
+.tt-doc .tt-fig .tt-img { margin-right: 1ch; }
+.tt-doc .tt-notelist { font-size: 0.92em; color: var(--t-dim); }
+.tt-doc .tt-notelist li { margin-bottom: 0.5em; }
+
+/* The terminal view drops the normal page (header, content, footer); the terminal, toggle, paperclips, mugging and robots stay. */
+html.tt-on .page { display: none !important; }
+/* Fun mode's switch between the terminal and the normal page, on both. */
+.view-toggle {
+  position: fixed; top: 12px; right: 16px; z-index: 1400; display: flex; gap: 2px; padding: 3px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  font: 12px/1 var(--font-mono); box-shadow: 0 6px 20px -12px rgb(0 0 0 / 0.35);
+}
+.view-toggle[hidden] { display: none; }
+.view-toggle button {
+  font: inherit; color: var(--muted); background: none; border: 0; padding: 7px 10px; cursor: pointer;
+  border-radius: calc(var(--radius) - 1px);
+}
+.view-toggle button:hover { color: var(--fg); }
+.view-toggle button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); cursor: default; }
+.view-toggle button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+@media (max-width: 600px) {
+  .tt { padding: 56px 10px 16px; }
+  .tt-screen { padding: 12px; font-size: 13.5px; }
+  .tt-bar span { margin-right: 0; }
+}

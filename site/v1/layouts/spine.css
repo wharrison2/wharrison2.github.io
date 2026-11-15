@@ -1,0 +1,27 @@
+/* Layout "Spine": your name runs up the left edge like the spine of a book, with the nav; everything else reads beside it. */
+@media (min-width: 760px) {
+  .page { display: block; max-width: none; margin: 0 0 0 104px; padding: 80px 56px 56px; }
+  .side {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 104px; z-index: 5;
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 24px;
+    padding: 32px 0; background: var(--surface); border-right: 1px solid var(--line);
+  }
+  .name, .side nav { writing-mode: vertical-rl; transform: rotate(180deg); }
+  .name { margin: 0; font-size: clamp(1.5rem, 5.6vh, 2.8rem); line-height: 1; white-space: nowrap; letter-spacing: 0.01em; }
+  .name br { display: none; }
+  .side nav { display: flex; gap: 22px; font-size: 0.9rem; }
+  [data-mode="fun"] .side nav a:hover { transform: none; }
+  main, footer { max-width: 680px; margin-left: auto; margin-right: auto; }
+  footer { margin-top: 72px; }
+}
+@media (max-width: 759px) {
+  .page { display: block; }
+  .side { position: static; padding-bottom: 16px; margin-bottom: 32px; border-bottom: 1px solid var(--line); }
+  .name { font-size: 1.6rem; margin-bottom: 8px; }
+  .name br { display: none; }
+  .side nav { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+}
+@media (min-width: 760px) and (max-height: 680px) {
+  .side { padding: 20px 0; }
+  .side nav { gap: 12px; font-size: 0.78rem; }
+}

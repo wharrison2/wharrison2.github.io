@@ -1,0 +1,8 @@
+/* Clay's palette with v1's serif (Newsreader) throughout. The name stays smaller than v1's. */
+@import url("clay.css");
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap");
+:root { --font-display: "Newsreader", Georgia, serif; --font-body: "Newsreader", Georgia, serif; --display-weight: 500; }
+body { font-size: 19px; }
+.name { font-size: 2rem; font-weight: 500; line-height: 1.05; letter-spacing: -0.01em; }
+main h2 { font-size: 1.05rem; font-weight: 500; }
+.post h1 { font-weight: 500; }

@@ -1,0 +1,7 @@
+/* Clay's palette: a serif (Newsreader) for the name and headings, clay's sans (Figtree) for everything else. */
+@import url("clay.css");
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;1,6..72,400&display=swap");
+:root { --font-display: "Newsreader", Georgia, serif; --display-weight: 500; }
+.name { font-size: 2.05rem; font-weight: 500; line-height: 1.05; letter-spacing: -0.01em; }
+main h2 { font-size: 1.1rem; font-weight: 500; }
+.post h1 { font-weight: 500; }

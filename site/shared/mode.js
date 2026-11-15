@@ -14,6 +14,8 @@ function save(mode) {
 }
 
 function startGimmicks() {
+  // The home page becomes a terminal you explore the site from.
+  if (document.querySelector(".page .intro")) import("./siteterm.js");
   if (root.dataset.paperclips !== "off") import("./paperclips.js");
   import("./mugging.js");
 }

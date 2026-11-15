@@ -1,0 +1,25 @@
+/* Layout "Letter": the home page as a note. Posts and projects run inline as sentences; your name signs it off at the end. */
+.page { display: flex; flex-direction: column; max-width: 600px; padding-top: 48px; }
+.side { display: contents; }
+.side nav { order: -1; display: flex; flex-wrap: wrap; gap: 4px 18px; margin-bottom: 72px; font-size: 0.9rem; }
+main { order: 0; }
+.name { order: 1; align-self: flex-start; margin: 48px 0 0; font-size: 1.5rem; font-style: italic; font-weight: 400; }
+.name br { display: none; }
+.name::before { content: "— "; }
+footer { order: 2; margin-top: 40px; }
+.intro p:first-child { font-size: 1.2rem; }
+section + section, #writing { margin-top: 1.4em; }
+main:not(.post) h2 {
+  display: inline; margin: 0 0.35em 0 0; padding: 0; border: 0;
+  font: italic 1em/inherit var(--font-body); color: var(--muted);
+}
+main:not(.post) h2::after { content: ":"; }
+.index, .index li, .projects, .projects dt, .projects dd { display: inline; margin: 0; padding: 0; }
+.index a { display: inline; padding: 0; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.index a:hover { text-decoration-color: var(--accent); }
+.index .leader { display: none; }
+.index time { font-size: 0.68rem; vertical-align: super; line-height: 0; margin-left: 3px; }
+.index li:not(:last-child)::after, .projects dd:not(:last-of-type)::after { content: "; "; }
+.index li:last-child::after, .projects dd:last-of-type::after { content: "."; }
+.projects dd::before { content: " — "; }
+.projects dd { color: inherit; }

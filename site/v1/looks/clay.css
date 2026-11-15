@@ -1,0 +1,25 @@
+/* Look "Clay": warm putty paper, brown-black ink, a muted terracotta accent. A clean sans, a little warmer than Moss. */
+@import url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400&display=swap");
+
+:root {
+  --bg: #f3eee8; --surface: #faf7f3; --fg: #2a2421; --muted: #6b615a; --line: #ddd3c9;
+  --accent: #a64b28; --accent-fg: #ffffff; --mark: #f0d9a8;
+  --radius: 6px;
+  --font-display: "Figtree", system-ui, sans-serif;
+  --font-body: "Figtree", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --display-weight: 600;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1917; --surface: #25211e; --fg: #ede6df; --muted: #a59a91; --line: #37312c;
+    --accent: #e39a78; --accent-fg: #1f0f08; --mark: #5a4320;
+    color-scheme: dark;
+  }
+}
+body { font-size: 17.5px; }
+.name { font-size: 1.9rem; font-weight: 600; line-height: 1.1; letter-spacing: -0.015em; }
+main h2 { font-style: normal; font-weight: 600; font-size: 0.95rem; }
+.post h1 { font-weight: 600; letter-spacing: -0.02em; }
+.post blockquote { font-style: normal; }

@@ -1,0 +1,32 @@
+/* Layout "Poster": your name as large as the screen allows, then the posts as a numbered contents page in big type. */
+.page { display: block; max-width: none; padding: 0 clamp(16px, 4vw, 56px) 48px; }
+.side { position: static; display: flex; flex-direction: column; }
+.side nav {
+  order: -1; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 22px;
+  padding: 20px 0; border-bottom: 1px solid var(--line);
+}
+.name { margin: 0.1em 0 0 -0.04em; font-size: clamp(3.4rem, 16vw, 15rem); line-height: 0.86; letter-spacing: -0.045em; }
+main:not(.post) { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 0 clamp(32px, 6vw, 96px); margin-top: 64px; }
+.intro { grid-column: 1; grid-row: 1 / span 2; }
+.intro p:first-child { font-size: 1.45rem; }
+#writing { grid-column: 2; grid-row: 1; margin-top: 0; }
+#projects { grid-column: 2; grid-row: 2; margin-top: 56px; }
+main h2 { border-top: 0; padding-top: 0; }
+.index { counter-reset: post; border-bottom: 1px solid var(--line); }
+.index li { counter-increment: post; border-top: 1px solid var(--line); }
+.index a { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr) auto; align-items: baseline; gap: 0 16px; padding: 16px 0; }
+.index a::before { content: counter(post, decimal-leading-zero); font: 0.85rem/1 var(--font-mono); color: var(--accent); }
+.index .title { font: var(--display-weight) clamp(1.2rem, 2.1vw, 1.6rem)/1.25 var(--font-display); letter-spacing: -0.01em; }
+.index .leader { display: none; }
+footer { margin-top: 80px; }
+.page:has(main.post) .name { font-size: clamp(2.6rem, 9vw, 6rem); }
+main.post, main.post + footer { max-width: 700px; margin-left: auto; margin-right: auto; }
+main.post { margin-top: 56px; }
+@media (max-width: 860px) {
+  main:not(.post) { grid-template-columns: 1fr; margin-top: 40px; }
+  .intro, #writing, #projects { grid-column: 1; grid-row: auto; }
+  #writing { margin-top: 32px; }
+  .intro p:first-child { font-size: 1.25rem; }
+  .index a { grid-template-columns: 2.2rem minmax(0, 1fr); }
+  .index time { grid-column: 2; margin-top: 6px; }
+}
