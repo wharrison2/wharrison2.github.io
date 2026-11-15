@@ -6,10 +6,7 @@ const S = {
  },
  "nav": {
   "writing": "Writing",
-  "projects": "Projects",
-  "markov": "Markov",
-  "qr": "QR codes",
-  "transcription": "Transcription"
+  "projects": "Projects"
  },
  "footer": {
   "github": "GitHub",
