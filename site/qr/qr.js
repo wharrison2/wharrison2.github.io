@@ -1,6 +1,8 @@
 // QR code maker. The encoding comes from qrcode-generator (loaded as a global from a CDN);
 // drawing, shapes and exports are here. The SVG is the single source: the PNG is that SVG rasterized.
 
+import Q, { fill } from "../strings/qr.js";
+
 const $ = (id) => document.getElementById(id);
 const qrcode = window.qrcode;
 qrcode.stringToBytes = qrcode.stringToBytesFuncs["UTF-8"];
@@ -103,7 +105,7 @@ function render() {
   if (!text) {
     current = null;
     code.className = "code error";
-    code.textContent = "Type something to encode.";
+    code.textContent = Q.preview.empty;
     $("info").textContent = "";
     buttons.forEach((b) => { b.disabled = true; });
     return;
@@ -114,7 +116,7 @@ function render() {
   } catch {
     current = null;
     code.className = "code error";
-    code.textContent = "That's too long to fit in a QR code at this error correction. Try a lower level or shorter text.";
+    code.textContent = Q.preview.too_long;
     $("info").textContent = "";
     buttons.forEach((b) => { b.disabled = true; });
     return;
@@ -124,15 +126,17 @@ function render() {
   code.className = "code";
   code.innerHTML = svg;
   const bytes = new TextEncoder().encode(text).length;
-  $("info").textContent = `Version ${(m.n - 17) / 4} · ${m.n}×${m.n} modules · ${bytes} byte${bytes === 1 ? "" : "s"}`;
+  $("info").textContent = fill(Q.preview.info, {
+    version: (m.n - 17) / 4, n: m.n, bytes: bytes === 1 ? Q.preview.one_byte : fill(Q.preview.bytes, { n: bytes }),
+  });
   buttons.forEach((b) => { b.disabled = false; });
 
   const lf = luminance(options.fg), lb = luminance(options.bg);
   const ratio = (Math.max(lf, lb) + 0.05) / (Math.min(lf, lb) + 0.05);
   const warnings = [];
-  if (ratio < 4) warnings.push("The colors are close in brightness; some scanners won't read this.");
-  if (lf > lb) warnings.push("Light code on a dark background: many scanners only read dark-on-light.");
-  if (options.margin < 2) warnings.push("A margin under 2 modules can make the code hard to pick out.");
+  if (ratio < 4) warnings.push(Q.warnings.contrast);
+  if (lf > lb) warnings.push(Q.warnings.inverted);
+  if (options.margin < 2) warnings.push(Q.warnings.margin);
   $("warning").hidden = !warnings.length;
   $("warning").textContent = warnings.join(" ");
 }
@@ -164,17 +168,17 @@ async function png() {
 }
 
 $("form").addEventListener("input", render);
-$("svg").addEventListener("click", () => download(new Blob([current.svg], { type: "image/svg+xml" }), "qr-code.svg"));
-$("png").addEventListener("click", async () => download(await png(), "qr-code.png"));
+$("svg").addEventListener("click", () => download(new Blob([current.svg], { type: "image/svg+xml" }), `${Q.preview.file}.svg`));
+$("png").addEventListener("click", async () => download(await png(), `${Q.preview.file}.png`));
 $("copy").addEventListener("click", async () => {
   const button = $("copy");
   try {
     await navigator.clipboard.write([new ClipboardItem({ "image/png": png() })]);
-    button.textContent = "Copied";
+    button.textContent = Q.preview.copied;
   } catch {
-    button.textContent = "Couldn't copy";
+    button.textContent = Q.preview.copy_failed;
   }
-  setTimeout(() => { button.textContent = "Copy"; }, 1600);
+  setTimeout(() => { button.textContent = Q.preview.copy; }, 1600);
 });
 
 render();

@@ -1,0 +1,105 @@
+# Text for the home page (site/index.html) and its fun-mode terminal. After editing, run: python3 tools/build_content.py
+# In page text, *italic*, **bold**, `code` and [link](url) work.
+# {name} is filled in by the page: keep it where the number or word should go.
+
+# The opening paragraphs, under your name, in a """ string. Separate paragraphs with a blank line.
+# The first paragraph shows a little larger than the rest. While it's empty, the page shows placeholder text.
+intro = ""
+
+[page]
+# Browser tab title
+title = "William Harrison"
+
+[headings]
+# Headings over the two lists
+writing = "Writing"
+projects = "Projects"
+
+# The posts in the Writing list, newest first: each one's title and the date shown beside it.
+# A new post also needs its own line in site/index.html (with its link and full date).
+[posts.astra]
+title = "OpenAI's Astra alignment claims are dubious and there is good evidence it is misaligned"
+date = "Sep 2026"
+
+[posts.vegan]
+title = "EAs Should be Vegan, for EA reasons"
+date = "Jul 2026"
+
+[posts.doom]
+title = "Technical AI Safety Research Plausibly Increases P(doom) Absent Vastly More Advocacy"
+date = "Apr 2026"
+
+[posts.scope]
+title = "Scope and Sensitivity"
+date = "Apr 2026"
+
+[terminal]
+# The terminal (fun mode). Command names and file names are what you type, so they stay as they are.
+# First line when it opens. {date} is a day about a day ago, like "Sat Nov 14".
+last_login = "Last login: {date} on ttys001"
+# Second line. {name} is your name from the top of the page.
+welcome = "Welcome. This is {name}'s site. Type help, or click a name below."
+# What `help` prints: each command and what it does
+help = [
+  ["ls [-l] [dir]", "list what's here"],
+  ["cd <dir>", "go into a folder (cd .. to go back)"],
+  ["cat <file>", "read a file or a post, here in the terminal"],
+  ["open <file>", "go to the real page for a post or project"],
+  ["tree", "everything at once"],
+  ["pwd, whoami, clear, history", ""],
+  ["exit", "the normal view of the site"],
+]
+# Under the help list
+help_hint = "Tab completes names; ↑ and ↓ go through what you've typed. You can also click a name."
+# While a post loads; {file} is its file name
+reading = "reading {file} …"
+# After a post; {file} is its file name
+open_hint = "open {file}  to read it on its own page"
+# At the bottom of a project; {name} is what to type, {href} where it goes
+open_project = "open {name}  →  {href}"
+# While `open` goes to a page; {path} is where
+opening = "opening {path} …"
+# When you type exit
+logout = "logout"
+# Stands in for a picture in a post
+image = "[image]"
+# Heading over a post's footnotes
+notes = "Notes"
+# Screen-reader label for the command line
+input_label = "Command"
+# The switch between the two views (fun mode only), and its screen-reader label
+view_label = "View"
+normal_view = "Normal view"
+terminal_view = "Terminal view"
+
+[terminal.errors]
+# Error messages, made to look like a real shell's. {arg} is what you typed after the command.
+ls_missing = "ls: {arg}: No such file or directory"
+cd_file = "cd: not a directory: {arg}"
+cd_missing = "cd: no such file or directory: {arg}"
+cat_which = "cat: which file? (try ls)"
+cat_missing = "cat: {arg}: No such file or directory"
+cat_dir = "cat: {arg}: Is a directory"
+# {reason} is the technical reason, like "404 Not Found"
+cat_failed = "cat: {arg}: couldn't load it ({reason})"
+open_what = "open: what should I open? (try open markov)"
+open_nothing = "open: {arg}: nothing to open there"
+# {user} is the terminal's user name
+sudo = "{user} is not in the sudoers file. This incident will be reported."
+# Typing a file's name as if it were a command; {cmd} is what you typed
+permission = "zsh: permission denied: {cmd}  (try cat {cmd})"
+not_found = "zsh: command not found: {cmd}  (try help)"
+# The reason in cat_failed when a page has no post on it
+no_post = "no post on that page"
+
+# The Projects list, in order. Each has a name, an optional link, and a sentence or two about it.
+# Add, remove or reorder freely. A project with no "about" yet shows placeholder text.
+[[projects]]
+name = "Markov"
+link = "markov/"
+about = ""
+
+[[projects]]
+name = "Transcription detector"
+link = "transcription/"
+about = "Type a few sentences and a model guesses, from your keystroke timing alone, whether you're writing your own words or copying someone else's. A class project, about 77% accurate."

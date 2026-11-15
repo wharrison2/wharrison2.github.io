@@ -12,82 +12,77 @@
   <script src="../shared/look.js"></script>
   <script type="module" src="../shared/mode.js"></script>
   <script type="module" src="detector.js"></script>
-  <title>Transcription detector</title>
+  <title data-t="page.title">Transcription detector</title>
 </head>
 <body>
   <div class="page">
     <header class="bar">
-      <a class="home" data-home href="../">William Harrison</a>
+      <a class="home" data-home href="../"><span data-t="site.first_name">William</span> <span data-t="site.last_name">Harrison</span></a>
       <nav>
-        <a href="../markov/">Markov</a>
-        <a href="../qr/">QR codes</a>
-        <a href="./" aria-current="page">Transcription</a>
+        <a href="../markov/" data-t="nav.markov">Markov</a>
+        <a href="../qr/" data-t="nav.qr" data-fun-only>QR codes</a>
+        <a href="./" aria-current="page" data-t="nav.transcription">Transcription</a>
       </nav>
     </header>
 
     <main>
-      <h1>Transcription detector</h1>
-      <p class="sub">Type, and a model guesses whether you're writing your own words or copying someone else's,
-        from how you type rather than what. Everything happens in your browser; nothing is sent anywhere.</p>
+      <h1 data-t="page.heading">Transcription detector</h1>
+      <p class="sub" data-t="page.intro">Type, and a model guesses whether you're writing your own words or copying someone else's, from how you type rather than what. Everything happens in your browser; nothing is sent anywhere.</p>
 
       <div class="detector">
         <section class="typing">
-          <div class="modes" role="tablist" aria-label="What to type">
-            <button type="button" role="tab" data-task="natural" aria-selected="true">Write your own</button>
-            <button type="button" role="tab" data-task="transcription" aria-selected="false">Copy a passage</button>
+          <div class="modes" role="tablist" aria-label="What to type" data-t-aria-label="modes.label">
+            <button type="button" role="tab" data-task="natural" aria-selected="true" data-t="modes.own">Write your own</button>
+            <button type="button" role="tab" data-task="transcription" aria-selected="false" data-t="modes.copy">Copy a passage</button>
           </div>
 
           <p class="prompt" id="prompt"></p>
           <blockquote class="source" id="source" hidden>
             <p id="source-text"></p>
-            <cite><a id="source-link" target="_blank" rel="noopener">Wikipedia</a></cite>
+            <cite><a id="source-link" target="_blank" rel="noopener" data-t="typing.source">Wikipedia</a></cite>
           </blockquote>
 
-          <label for="input" class="visually-hidden">Your typing</label>
+          <label for="input" class="visually-hidden" data-t="typing.label">Your typing</label>
           <div class="field">
             <div class="marks" id="marks" aria-hidden="true"></div>
             <textarea id="input" rows="8" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
-              placeholder="Start typing…"></textarea>
+              placeholder="Start typing…" data-t-placeholder="typing.placeholder"></textarea>
           </div>
           <div class="under">
-            <span id="count">0 words</span>
+            <span id="count"></span>
             <span id="note" class="note"></span>
-            <button type="button" class="btn quiet" id="reset">New question</button>
+            <button type="button" class="btn quiet" id="reset" data-t="typing.new_question">New question</button>
           </div>
         </section>
 
         <aside class="verdict" aria-live="polite">
-          <p class="call" id="call">Waiting for typing</p>
+          <p class="call" id="call" data-t="verdict.waiting">Waiting for typing</p>
           <div class="meter" aria-hidden="true">
             <div class="meter-fill" id="meter"></div>
             <div class="meter-mid"></div>
           </div>
-          <div class="meter-labels"><span>Your own</span><span>Copied</span></div>
-          <p class="prob" id="prob">It needs a few sentences, about 30 words, to say much.</p>
+          <div class="meter-labels"><span data-t="verdict.meter_own">Your own</span><span data-t="verdict.meter_copied">Copied</span></div>
+          <p class="prob" id="prob" data-t="verdict.needs_more">It needs a few sentences, about 30 words, to say much.</p>
 
-          <h2>What it's looking at</h2>
+          <h2 data-t="verdict.features_heading">What it's looking at</h2>
           <ul class="feats" id="feats"></ul>
-          <p class="legend"><span class="key natural"></span>Middle half of people writing their own words
-            <br><span class="key transcribed"></span>Middle half of people copying a passage</p>
+          <p class="legend"><span class="key natural"></span><span data-t="verdict.legend_own">Middle half of people writing their own words</span>
+            <br><span class="key transcribed"></span><span data-t="verdict.legend_copied">Middle half of people copying a passage</span></p>
         </aside>
       </div>
 
       <section class="about">
-        <h2>About</h2>
-        <p>This is a live version of a class project (CS 129). AI-writing detectors judge text by what it says,
-          which makes them unreliable and unfair to non-native English speakers. This one looks only at the process:
-          the timing of your keystrokes, your pauses and your deletions.</p>
-        <p>For the study, people typed about 50 words twice: once writing freely and once copying a Wikipedia passage,
-          in random order. A logistic regression on three features of their keystroke logs (time spent paused, how often they went back to delete, and how much they deleted each time) tells the two apart
-          <span id="accuracy">about 77%</span> of the time on held-out typing. People writing their own words pause to think
-          and go back to fix things; people copying type in long, steady bursts. Most of its mistakes are calling
-          rushed, careless writing copied.</p>
-        <p><a href="https://github.com/wharrison2/Transcription-Detector-Keystroke-Logger">Code on GitHub</a></p>
+        <h2 data-t="about.heading">About</h2>
+        <div data-t="about.body">
+          <p>This is a live version of a class project (CS 129). AI-writing detectors judge text by what it says, which makes them unreliable and unfair to non-native English speakers. This one looks only at the process: the timing of your keystrokes, your pauses and your deletions.</p>
+          <p>For the study, people typed about 50 words twice: once writing freely and once copying a Wikipedia passage, in random order. A logistic regression on three features of their keystroke logs (time spent paused, how often they went back to delete, and how much they deleted each time) tells the two apart <span id="accuracy"></span> of the time on held-out typing. People writing their own words pause to think and go back to fix things; people copying type in long, steady bursts. Most of its mistakes are calling rushed, careless writing copied.</p>
+          <p><a href="https://github.com/wharrison2/Transcription-Detector-Keystroke-Logger">Code on GitHub</a></p>
+        </div>
       </section>
     </main>
 
     <footer class="bottom">
-      <a href="https://github.com/wharrison2">GitHub</a>
+      <a href="https://github.com/wharrison2" data-t="footer.github">GitHub</a>
       <button type="button" data-mode-toggle></button>
     </footer>
   </div>

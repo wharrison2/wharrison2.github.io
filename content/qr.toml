@@ -1,0 +1,63 @@
+# Text for the QR code maker (qr/). After editing, run: python3 tools/build_content.py
+# In page text, *italic*, **bold**, `code` and [link](url) work.
+# {name} is filled in by the page: keep it where the number or word should go.
+
+[page]
+# Browser tab title
+title = "QR codes"
+# Big heading at the top
+heading = "QR codes"
+# Line under the heading
+intro = "Everything happens in your browser; nothing you type is sent anywhere."
+
+[controls]
+# Label over the text box
+text = "Text or link"
+# Label over the error correction menu, and its four choices
+ecl = "Error correction"
+ecl_low = "Low (7%)"
+ecl_medium = "Medium (15%)"
+ecl_quartile = "Quartile (25%)"
+ecl_high = "High (30%)"
+# Label over the shape menu, and its three choices
+shape = "Shape"
+shape_square = "Squares"
+shape_rounded = "Rounded"
+shape_dots = "Dots"
+# Label over the margin box
+margin = "Margin"
+# Labels over the two color pickers
+fg = "Foreground"
+bg = "Background"
+# Label over the PNG size menu, and its three choices
+size = "PNG size"
+size_512 = "512 px"
+size_1024 = "1024 px"
+size_2048 = "2048 px"
+
+[warnings]
+# Shown under the controls when the colors or margin might not scan; several can show at once
+contrast = "The colors are close in brightness; some scanners won't read this."
+inverted = "Light code on a dark background: many scanners only read dark-on-light."
+margin = "A margin under 2 modules can make the code hard to pick out."
+
+[preview]
+# Read aloud by screen readers for the preview area
+label = "Preview"
+# In place of the code when the box is empty
+empty = "Type something to encode."
+# In place of the code when the text doesn't fit
+too_long = "That's too long to fit in a QR code at this error correction. Try a lower level or shorter text."
+# Line under the code; {bytes} is one of the two byte counts below
+info = "Version {version} · {n}×{n} modules · {bytes}"
+bytes = "{n} bytes"
+one_byte = "1 byte"
+# The three buttons under the code
+png = "Download PNG"
+svg = "Download SVG"
+copy = "Copy"
+# What the Copy button says for a moment after it's pressed
+copied = "Copied"
+copy_failed = "Couldn't copy"
+# Name of the downloaded file, before .png or .svg
+file = "qr-code"

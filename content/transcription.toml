@@ -1,0 +1,131 @@
+# Text for the transcription detector (transcription/). After editing, run: python3 tools/build_content.py
+# In page text, *italic*, **bold**, `code` and [link](url) work.
+# {name} is filled in by the page: keep it where the number or word should go.
+
+[page]
+# Browser tab title
+title = "Transcription detector"
+# Big heading at the top
+heading = "Transcription detector"
+# Line under the heading
+intro = "Type, and a model guesses whether you're writing your own words or copying someone else's, from how you type rather than what. Everything happens in your browser; nothing is sent anywhere."
+
+[modes]
+# Read aloud by screen readers for the two tabs
+label = "What to type"
+# Tab for answering a question
+own = "Write your own"
+# Tab for retyping a passage
+copy = "Copy a passage"
+
+[typing]
+# Screen-reader label for the text box
+label = "Your typing"
+# Faint text in the empty box
+placeholder = "Start typing…"
+# Instruction above the passage, in copy mode
+copy_prompt = "Type the passage below exactly as written."
+# Credit under the passage (links to the article)
+source = "Wikipedia"
+# Button that clears the box and picks another question
+new_question = "New question"
+# Same button, in copy mode
+new_passage = "New passage"
+# Word count under the box
+words = "{n} words"
+# Word count when it's exactly one
+one_word = "1 word"
+# Word count once there are earlier stretches; {count} is the count above
+this_stretch = "This stretch: {count}"
+# Shown if you try to paste or drop text in
+paste_off = "Pasting is off: it has to see you type."
+# Shown on phones and tablets
+phone_note = "This works best on a physical keyboard: phone keyboards don't report keystrokes the same way."
+
+# Questions for "Write your own", one picked at random each round. Add, remove or reorder freely.
+questions = [
+  "What person has most influenced your thinking, and what is your biggest disagreement with them?",
+  "What's a specific item on your moral to-do list? Why haven't you gotten to it?",
+  "Estimate (without looking it up) how many M&Ms could fit in an adult African elephant, and reason through your answer.",
+  "What's a belief you've changed your mind about in the last few years? What finally changed it?",
+  "What's something you're confident about that most people around you would disagree with?",
+  "Make the strongest case you can against something you care about.",
+  "Roughly how many words have you spoken in your whole life so far? Show your reasoning."
+]
+
+[verdict]
+# Before anything's typed, and after a stretch ends
+waiting = "Waiting for typing"
+# Typed something, but not enough to judge
+keep_going = "Keep going"
+# Under that, until there's enough to judge
+needs_more = "It needs a few sentences, about 30 words, to say much."
+# The two verdicts
+own = "Looks like your own words"
+copied = "Looks copied"
+# Added to a verdict it's barely sure of
+unsure = "?"
+# Before about 30 words; {verdict} is one of the two above
+early = "Early guess: {verdict}"
+# While pointing at an earlier stretch
+earlier_own = "That stretch: looks like your own words"
+earlier_copied = "That stretch: looks copied"
+# How sure it is
+sure = "{pct}% sure."
+# Added after that, before about 30 words
+more_reliable = "It gets more reliable around {words} words."
+# Added after that, for a short earlier stretch
+rough = "Only {words} words, so a rough call."
+# The two ends of the meter
+meter_own = "Your own"
+meter_copied = "Copied"
+# Heading over the feature rows
+features_heading = "What it's looking at"
+# Key under the feature rows
+legend_own = "Middle half of people writing their own words"
+legend_copied = "Middle half of people copying a passage"
+
+[features]
+# Feature row names, and the unit after a number
+paused = "Time spent paused"
+runs = "Times you went back to delete"
+runs_unit = "{n} per 100 keys"
+run_length = "Keys deleted each time"
+# Under each row: which way it points
+push_none = "doesn't say much either way"
+push_copied = "points to copied"
+push_own = "points to your own words"
+
+[about]
+heading = "About"
+# Blank lines separate paragraphs. {accuracy} is the accuracy line below.
+body = """
+This is a live version of a class project (CS 129). AI-writing detectors judge text by what it says, which makes them unreliable and unfair to non-native English speakers. This one looks only at the process: the timing of your keystrokes, your pauses and your deletions.
+
+For the study, people typed about 50 words twice: once writing freely and once copying a Wikipedia passage, in random order. A logistic regression on three features of their keystroke logs (time spent paused, how often they went back to delete, and how much they deleted each time) tells the two apart {accuracy} of the time on held-out typing. People writing their own words pause to think and go back to fix things; people copying type in long, steady bursts. Most of its mistakes are calling rushed, careless writing copied.
+
+[Code on GitHub](https://github.com/wharrison2/Transcription-Detector-Keystroke-Logger)
+"""
+# The model's accuracy, filled in from the model
+accuracy = "about {pct}%"
+
+# Passages for "Copy a passage" (the study's own, from Wikipedia): the text and the article's address.
+[[passages]]
+text = "Tower 333 is a 20-story high-rise office building in the central business district of Bellevue, Washington, United States. The building housed the corporate office of Expedia, Inc. from 2008 to 2019. Amazon is planned to take over the lease for the entire building in 2020."
+url = "https://en.wikipedia.org/wiki/Tower_333"
+
+[[passages]]
+text = "Shopper's World is an open-air shopping center in Framingham, Massachusetts. The original facility (spelled Shoppers' World) is of historical significance as one of the first suburban shopping malls in the United States upon opening in 1951; though it had a central courtyard and covered walkways, it was not fully indoor."
+url = "https://en.wikipedia.org/wiki/Shopper%27s_World"
+
+[[passages]]
+text = "The National Museum of Galle (Galle National Museum) is one of the national museums of Sri Lanka. It is located in the oldest remaining Dutch building in the Galle fort, Galle, a single storey colonnaded Dutch building built in 1656 as the commissariat store for the Dutch garrison at the fort."
+url = "https://en.wikipedia.org/wiki/National_Museum_of_Galle"
+
+[[passages]]
+text = "The 1954 Atlantic hurricane season was an above-average Atlantic hurricane season in terms of named storms, with 16 forming. Overall, the season resulted in $751.6 million in damage, the most of any season at the time. The season officially began on June 15, and nine days later the first named storm developed."
+url = "https://en.wikipedia.org/wiki/1954_Atlantic_hurricane_season"
+
+[[passages]]
+text = "The men's singles was a tennis event held as part of the tennis program at the 1904 Summer Olympics. It was the third time the event was held at the Olympics. There were 27 competitors from 2 nations. The event was won by Beals Wright, with the Americans sweeping the medals."
+url = "https://en.wikipedia.org/wiki/Tennis_at_the_1904_Summer_Olympics_%E2%80%93_Men%27s_singles"

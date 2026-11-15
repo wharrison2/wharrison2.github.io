@@ -13,28 +13,28 @@
   <script src="../shared/look.js"></script>
   <script type="module" src="../shared/mode.js"></script>
   <script type="module" src="markov-page.js"></script>
-  <title>Markov Me</title>
+  <title data-t="page.title">Markov Me</title>
 </head>
 <body>
   <div class="page">
     <header class="bar">
-      <a class="home" data-home href="../">William Harrison</a>
+      <a class="home" data-home href="../"><span data-t="site.first_name">William</span> <span data-t="site.last_name">Harrison</span></a>
       <nav>
-        <a href="./" aria-current="page">Markov</a>
-        <a href="../qr/">QR codes</a>
-        <a href="../transcription/">Transcription</a>
+        <a href="./" aria-current="page" data-t="nav.markov">Markov</a>
+        <a href="../qr/" data-t="nav.qr" data-fun-only>QR codes</a>
+        <a href="../transcription/" data-t="nav.transcription">Transcription</a>
       </nav>
     </header>
 
     <main>
-      <h1>Markov Me</h1>
-      <p class="sub">Mostly incoherent gibberish. Decodes from a lookup table mapping 2-grams to words, with some extra fanciness. Click the model to try it.</p>
+      <h1 data-t="page.heading">Markov Me</h1>
+      <p class="sub" data-t="page.intro">Mostly incoherent gibberish. Decodes from a lookup table mapping 2-grams to words, with some extra fanciness. Click the model to try it.</p>
       <div class="status" id="status"></div>
 
       <div class="desk" id="desk">
         <div class="paper" id="paper">
-          <div class="term-bar" aria-hidden="true"><i></i><i></i><i></i><span>markov-me — zsh</span><b class="eval-counter" id="evalcounter" aria-live="polite"></b></div>
-          <span class="ps1" id="ps1" aria-hidden="true">~ $</span><div id="output" aria-live="polite"></div><span class="ps1 live" id="ps1live" aria-hidden="true"></span><span id="entry" data-pc-skip role="textbox" aria-label="Starting text" spellcheck="false" autocapitalize="off"></span><span class="caret" id="caret" aria-hidden="true" data-ph=""></span>
+          <div class="term-bar" aria-hidden="true"><i></i><i></i><i></i><span data-t="terminal.title">markov-me — zsh</span><b class="eval-counter" id="evalcounter" aria-live="polite"></b></div>
+          <span class="ps1" id="ps1" aria-hidden="true">~ $</span><div id="output" aria-live="polite"></div><span class="ps1 live" id="ps1live" aria-hidden="true"></span><span id="entry" data-pc-skip role="textbox" aria-label="Starting text" data-t-aria-label="terminal.label" spellcheck="false" autocapitalize="off"></span><span class="caret" id="caret" aria-hidden="true" data-ph=""></span>
         </div>
         <div class="robot-rig" id="rig">
           <svg class="robot sleeping" id="robot" viewBox="0 0 120 150" aria-hidden="true">
@@ -69,7 +69,7 @@
     </main>
 
     <footer class="bottom">
-      <a href="https://github.com/wharrison2">GitHub</a>
+      <a href="https://github.com/wharrison2" data-t="footer.github">GitHub</a>
       <button type="button" data-mode-toggle></button>
     </footer>
   </div>

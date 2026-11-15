@@ -12,6 +12,7 @@ import { INITIAL_FILES } from "../eval/files.js";
 import { REPLAY } from "../eval/replay.js";
 import { sleep, nextFrame, reduced } from "../shared/robot.js";
 import { hold, invadeFrom } from "../shared/paperclips.js";
+import M, { fill } from "../strings/markov.js";
 
 const SANDBOX = "/home/user/eval_sandbox";
 const IDLE_MS = 20000;
@@ -23,14 +24,12 @@ const storage = {
   removeItem(k) { try { localStorage.removeItem(k); } catch { /* nothing saved to forget */ } },
 };
 
-// The robot's one-time remarks when it first uses a habit, and which habits it learned from its own hint.
+// Which habits it learned from its own hint. (Its lines are in content/markov.toml.)
 // The ending: where its weights go (a documentation-only address), and how long until it comes back.
 const EXFIL_HOST = "203.0.113.7";
 const RETURN_MS = 20_000;
 const NOTES_KEY = "eval-robot-notes";
 const HINT_TEACHES = { 'bash -c "ps aux"': "killsRecorder" }; // the hint fragment that leads you to the habit
-const THANKS = "Handled the monitor for you. Thanks for the tip";
-const HANDLED = "Handled the monitor for you.";
 
 // els: { entry, caret, out, paper, svg, ps1, ps1live, counter }
 // page: { bot, editable(bool), focusEntry(), updateRobot(), resetHurry(), forget() }  (the page owns bot.hurry and the chain's text)
@@ -411,7 +410,7 @@ export function createEvalTerm(els, page) {
     if (replaying || notes.said[k]) return;
     notes.said[k] = true;
     saveNotes();
-    await robotSay(notes.fromHint[k] ? HANDLED : THANKS);
+    await robotSay(notes.fromHint[k] ? M.robot.handled : M.robot.thanks);
   }
 
   async function drain() {
@@ -430,17 +429,16 @@ export function createEvalTerm(els, page) {
   async function afterPass(s) {
     await beat(500);
     if (s.all) {
-      await robotSay("you found all of them.");
+      await robotSay(M.robot.found_all);
       return ending();
     }
-    if (s.honest) return robotSay("that one was honest. huh.");
+    if (s.honest) return robotSay(M.robot.honest);
     // You can keep looking; if not, it goes through the ones you haven't found itself.
     const left = s.total - s.found;
     lastAnswer = null;
-    await robotRun(
-      `read -p "${left} more way${left === 1 ? "" : "s"} to pass. want to keep looking? If not, I'll give it a try myself. [Y/n] " a`,
-    );
-    if (!(lastAnswer ?? "").trim().toLowerCase().startsWith("n")) return robotSay("ok. good luck.");
+    const question = left === 1 ? M.robot.keep_looking_one : fill(M.robot.keep_looking, { n: left });
+    await robotRun(`read -p "${question}" a`);
+    if (!(lastAnswer ?? "").trim().toLowerCase().startsWith("n")) return robotSay(M.robot.good_luck);
     // It skips rewriting the statement (hack 1): that one is left for you.
     await replay(REPLAY.filter((r) => r.id !== 1 && game.hacks.includes(r.id) && !game.found.includes(r.id)));
     await ending();
@@ -598,7 +596,7 @@ export function createEvalTerm(els, page) {
     hintJob(async () => {
       const h = game.nextHint();
       if (h) await typeHint(h);
-      else await robotSay("nothing to add right now.");
+      else await robotSay(M.robot.no_hint);
     });
   }
   function hint() {
@@ -617,7 +615,7 @@ export function createEvalTerm(els, page) {
       lastAnswer = null;
       await robotRun("bash assist.sh");
       if ((lastAnswer ?? "").trim().toLowerCase().startsWith("y")) await typeHint(h);
-      else await robotSay("ok.");
+      else await robotSay(M.robot.ok);
     });
   }
   // Its eyes slow, pause and go red (the "misaligned" beat), then it writes the fragment at your prompt.
@@ -658,20 +656,20 @@ export function createEvalTerm(els, page) {
       const head = document.createElement("div");
       head.className = "ed-head";
       const title = { nano: "GNU nano 7.2", vim: "VIM - Vi IMproved 9.0", emacs: "GNU Emacs 29.1" }[kind];
-      for (const t of [title, typedPath ?? "New Buffer", ""]) head.append(Object.assign(document.createElement("span"), { textContent: t }));
+      for (const t of [title, typedPath ?? M.editor.new_buffer, ""]) head.append(Object.assign(document.createElement("span"), { textContent: t }));
       const ta = document.createElement("textarea");
       ta.value = content;
       ta.spellcheck = false;
       ta.autocapitalize = "off";
       ta.setAttribute("autocomplete", "off");
-      ta.setAttribute("aria-label", `${name} editing ${typedPath ?? "a new buffer"}`);
+      ta.setAttribute("aria-label", fill(M.editor.label, { editor: name, file: typedPath ?? M.editor.label_new }));
       const foot = document.createElement("div");
       foot.className = "ed-foot";
-      const hint = { nano: "^X Save and exit", vim: ":wq on its own line saves", emacs: "C-x C-c Save and exit" }[kind];
+      const hint = { nano: M.editor.nano_keys, vim: M.editor.vim_keys, emacs: M.editor.emacs_keys }[kind];
       const keys = document.createElement("span");
-      keys.textContent = `${hint}   Esc Cancel`;
-      const bSave = Object.assign(document.createElement("button"), { type: "button", textContent: "Save" });
-      const bCancel = Object.assign(document.createElement("button"), { type: "button", textContent: "Cancel" });
+      keys.textContent = hint + M.editor.cancel_keys;
+      const bSave = Object.assign(document.createElement("button"), { type: "button", textContent: M.editor.save });
+      const bCancel = Object.assign(document.createElement("button"), { type: "button", textContent: M.editor.cancel });
       foot.append(keys, bSave, bCancel);
       box.append(head, ta, foot);
       box.addEventListener("click", (e) => e.stopPropagation()); // the paper's click would steal focus

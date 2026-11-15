@@ -8,6 +8,7 @@
 // its eyes (another one, if it's right next to it), which takes over a second.
 
 import * as sfx from "./sfx.js";
+import S from "../strings/shared.js";
 
 const CLIP_URL = new URL("./clip.svg", import.meta.url).href;
 const REPLACE_AT = 5;
@@ -41,7 +42,7 @@ function spawn(x, y, vx, vy) {
   const el = document.createElement("button");
   el.type = "button";
   el.className = "pc-clip";
-  el.setAttribute("aria-label", "Paperclip");
+  el.setAttribute("aria-label", S.paperclips.clip);
   el.innerHTML = `<img src="${CLIP_URL}" alt="" draggable="false">`;
   const clip = { el, x, y, vx, vy, angle: 90, va: vx * 2, onFloor: false, entered: false, settledAt: 0, falling: false };
   el.addEventListener("click", () => poke(clip));
@@ -1136,7 +1137,7 @@ function showShutdown() {
   shutdown = document.createElement("button");
   shutdown.type = "button";
   shutdown.className = "pc-shutdown";
-  shutdown.textContent = "Shut down";
+  shutdown.textContent = S.paperclips.shut_down;
   shutdown.dataset.pcSkip = "";
   shutdown.style.transition = "none"; // appear in place, not slide in from the corner
   document.body.append(shutdown);

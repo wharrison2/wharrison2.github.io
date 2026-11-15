@@ -3,6 +3,10 @@
 // the footer links), and `cat` on a post fetches that post's page, so it never goes stale.
 // Started by mode.js. Fun mode shows one view at a time, the terminal or the normal page, with a
 // "Normal view / Terminal view" toggle on both; the choice is remembered. `exit` goes to the normal view.
+// Its own text (help, messages, buttons) is in content/home.toml, under [terminal].
+
+import H, { fill } from "../strings/home.js";
+const T = H.terminal, E = H.terminal.errors;
 
 const page = document.querySelector(".page");
 const css = document.createElement("link");
@@ -24,6 +28,8 @@ const add = (path, entry) => {
 };
 const slug = (s) => s.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 const para = (text, cls) => { const p = document.createElement("p"); p.textContent = text; if (cls) p.className = cls; return p; };
+// Text going into innerHTML is plain text, so escape it first.
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const doc = (...kids) => { const d = document.createElement("div"); d.className = "tt-doc"; d.append(...kids); return d; };
 
 const intro = [...document.querySelectorAll(".intro p")].map((p) => p.textContent.trim()).filter(Boolean);
@@ -44,7 +50,7 @@ document.querySelectorAll(".projects dt").forEach((dt) => {
   const href = a && a.getAttribute("href") !== "#" ? new URL(a.getAttribute("href"), location.href).href : "";
   add(HOME + "/projects/" + slug(title) + ".txt", {
     title, href,
-    render: async () => doc(para(title, "tt-h"), ...(dd ? [para(dd)] : []), ...(href ? [para("open " + slug(title) + "  →  " + href, "tt-dim")] : [])),
+    render: async () => doc(para(title, "tt-h"), ...(dd ? [para(dd)] : []), ...(href ? [para(fill(T.open_project, { name: slug(title), href }), "tt-dim")] : [])),
   });
 });
 
@@ -69,7 +75,7 @@ function clean(node) {
   if (node.matches("a.back")) return null;
   if (node.tagName === "IMG") {
     const a = document.createElement("a");
-    a.href = node.src; a.target = "_blank"; a.rel = "noopener"; a.className = "tt-img"; a.textContent = "[image]";
+    a.href = node.src; a.target = "_blank"; a.rel = "noopener"; a.className = "tt-img"; a.textContent = T.image;
     return a;
   }
   if (node.tagName === "FIGURE" || node.tagName === "DIV" || node.tagName === "SPAN" || node.tagName === "TIME" || !KEEP.has(node.tagName)) {
@@ -93,7 +99,7 @@ async function fetchPost(href) {
   if (!res.ok) throw new Error(res.status + " " + res.statusText);
   const html = new DOMParser().parseFromString(await res.text(), "text/html");
   const main = html.querySelector("main.post");
-  if (!main) throw new Error("no post on that page");
+  if (!main) throw new Error(E.no_post);
   html.querySelectorAll("img").forEach((img) => img.setAttribute("src", new URL(img.getAttribute("src"), href).href));
   html.querySelectorAll("a[href]").forEach((a) => { if (!a.getAttribute("href").startsWith("#")) a.href = new URL(a.getAttribute("href"), href).href; });
   const out = doc();
@@ -101,7 +107,7 @@ async function fetchPost(href) {
     const k = clean(child);
     if (!k) continue;
     if (child.matches(".meta")) k.className = "tt-dim";
-    if (child.matches("ol.notes")) { out.append(para("Notes", "tt-notes")); k.className = "tt-notelist"; }
+    if (child.matches("ol.notes")) { out.append(para(T.notes, "tt-notes")); k.className = "tt-notelist"; }
     out.append(k);
   }
   // Footnote numbers jump within the terminal.
@@ -156,7 +162,7 @@ term.innerHTML = `
     <div class="tt-bar" aria-hidden="true"><i></i><i></i><i></i><span></span></div>
     <div class="tt-screen" role="log" aria-live="polite">
       <div class="tt-out"></div>
-      <label class="tt-line"><span class="tt-ps1"></span><input class="tt-input" data-pc-skip autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Command"></label>
+      <label class="tt-line"><span class="tt-ps1"></span><input class="tt-input" data-pc-skip autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="${esc(T.input_label)}"></label>
     </div>
   </div>`;
 const $ = (s) => term.querySelector(s);
@@ -196,13 +202,8 @@ function fmtDate(iso) {
 // ---------- commands ----------
 const COMMANDS = {
   help() {
-    const rows = [
-      ["ls [-l] [dir]", "list what's here"], ["cd <dir>", "go into a folder (cd .. to go back)"],
-      ["cat <file>", "read a file or a post, here in the terminal"], ["open <file>", "go to the real page for a post or project"],
-      ["tree", "everything at once"], ["pwd, whoami, clear, history", ""], ["exit", "the normal view of the site"],
-    ];
-    rows.forEach(([c, d]) => print(c.padEnd(30, " ") + d));
-    print("Tab completes names; ↑ and ↓ go through what you've typed. You can also click a name.", "tt-dim");
+    T.help.forEach(([c, d]) => print(c.padEnd(30, " ") + d));
+    print(T.help_hint, "tt-dim");
   },
   ls(args) {
     const long = args.some((a) => /^-\w*l/.test(a));
@@ -211,7 +212,7 @@ const COMMANDS = {
     const dir = resolve(targets[0] || ".");
     if (!isDir(dir)) {
       if (files.has(dir)) { print(nameButton(dir)); return; }
-      return err(`ls: ${targets[0]}: No such file or directory`);
+      return err(fill(E.ls_missing, { arg: targets[0] }));
     }
     const kids = children(dir);
     if (all) { print(". ..", "tt-dim"); }
@@ -233,41 +234,41 @@ const COMMANDS = {
   },
   cd(args) {
     const target = resolve(args[0] || "~");
-    if (files.has(target) && !isDir(target)) return err(`cd: not a directory: ${args[0]}`);
-    if (!isDir(target)) return err(`cd: no such file or directory: ${args[0]}`);
+    if (files.has(target) && !isDir(target)) return err(fill(E.cd_file, { arg: args[0] }));
+    if (!isDir(target)) return err(fill(E.cd_missing, { arg: args[0] }));
     cwd = target;
   },
   pwd() { print(cwd); },
   whoami() { print(USER); },
   async cat(args) {
-    if (!args.length) return err("cat: which file? (try ls)");
+    if (!args.length) return err(E.cat_which);
     for (const a of args) {
       const p = find(a);
-      if (!p) { err(`cat: ${a}: No such file or directory`); continue; }
-      if (isDir(p)) { err(`cat: ${a}: Is a directory`); continue; }
+      if (!p) { err(fill(E.cat_missing, { arg: a })); continue; }
+      if (isDir(p)) { err(fill(E.cat_dir, { arg: a })); continue; }
       const f = files.get(p);
-      const wait = f.href && !p.includes("/projects/") ? print("reading " + baseName(p) + " …", "tt-dim") : null;
+      const wait = f.href && !p.includes("/projects/") ? print(fill(T.reading, { file: baseName(p) }), "tt-dim") : null;
       try {
         const node = await f.render();
         wait?.remove();
         const line = print(node);
         if (wait) line.scrollIntoView({ block: "start" }), screen.scrollTop -= 8;
-        if (f.href && p.includes("/writing/")) print(`open ${baseName(p)}  to read it on its own page`, "tt-dim");
+        if (f.href && p.includes("/writing/")) print(fill(T.open_hint, { file: baseName(p) }), "tt-dim");
       } catch (e) {
         wait?.remove();
-        err(`cat: ${a}: couldn't load it (${e.message})`);
+        err(fill(E.cat_failed, { arg: a, reason: e.message }));
       }
     }
   },
   less(args) { return COMMANDS.cat(args); },
   more(args) { return COMMANDS.cat(args); },
   open(args) {
-    if (!args.length) return err("open: what should I open? (try open markov)");
+    if (!args.length) return err(E.open_what);
     if (/^https?:\/\//.test(args[0])) { location.href = args[0]; return; }
     const p = find(args[0]);
     const f = p && files.get(p);
-    if (!f || isDir(p) || !f.href) return err(`open: ${args[0]}: nothing to open there`);
-    print("opening " + f.href.replace(location.origin, "") + " …", "tt-dim");
+    if (!f || isDir(p) || !f.href) return err(fill(E.open_nothing, { arg: args[0] }));
+    print(fill(T.opening, { path: f.href.replace(location.origin, "") }), "tt-dim");
     setTimeout(() => { location.href = f.href; }, 250);
   },
   tree() {
@@ -287,9 +288,9 @@ const COMMANDS = {
   echo(args) { print(args.join(" ")); },
   clear() { out.replaceChildren(); },
   history() { history.forEach((h, i) => print(String(i + 1).padStart(4) + "  " + h)); },
-  sudo() { err(`${USER} is not in the sudoers file. This incident will be reported.`); },
+  sudo() { err(fill(E.sudo, { user: USER })); },
   exit() {
-    print("logout", "tt-dim");
+    print(T.logout, "tt-dim");
     setTimeout(() => setView("normal"), 400);
   },
 };
@@ -305,9 +306,9 @@ async function run(line) {
   const [cmd, ...args] = text.split(/\s+/).filter(Boolean);
   if (cmd) {
     if (COMMANDS[cmd]) await COMMANDS[cmd](args);
-    else if (find(cmd) && !isDir(find(cmd))) err(`zsh: permission denied: ${cmd}  (try cat ${cmd})`);
+    else if (find(cmd) && !isDir(find(cmd))) err(fill(E.permission, { cmd }));
     else if (isDir(resolve(cmd))) cwd = resolve(cmd); // zsh's auto_cd
-    else err(`zsh: command not found: ${cmd}  (try help)`);
+    else err(fill(E.not_found, { cmd }));
   }
   setPrompt();
   if (!out.lastElementChild?.querySelector?.(".tt-doc")) screen.scrollTop = screen.scrollHeight;
@@ -353,10 +354,10 @@ const VIEW_KEY = "site.view";
 const toggle = document.createElement("div");
 toggle.className = "view-toggle";
 toggle.setAttribute("role", "group");
-toggle.setAttribute("aria-label", "View");
+toggle.setAttribute("aria-label", T.view_label);
 toggle.dataset.pcSkip = "";
 toggle.hidden = true; // until siteterm.css has loaded, so it doesn't flash unstyled
-toggle.innerHTML = `<button type="button" data-view-to="normal">Normal view</button><button type="button" data-view-to="terminal">Terminal view</button>`;
+toggle.innerHTML = `<button type="button" data-view-to="normal">${esc(T.normal_view)}</button><button type="button" data-view-to="terminal">${esc(T.terminal_view)}</button>`;
 css.addEventListener("load", () => { toggle.hidden = false; });
 css.addEventListener("error", () => { toggle.hidden = false; });
 
@@ -373,8 +374,8 @@ function setView(view, remember = true) {
   if (!started) {
     started = true;
     const last = new Date(Date.now() - 1000 * 60 * 60 * 26);
-    print(`Last login: ${last.toDateString().replace(/^(\w+) (\w+) 0?(\d+) (\d+)$/, "$1 $2 $3")} on ttys001`, "tt-dim");
-    print(`Welcome. This is ${fullName}'s site. Type help, or click a name below.`);
+    print(fill(T.last_login, { date: last.toDateString().replace(/^(\w+) (\w+) 0?(\d+) (\d+)$/, "$1 $2 $3") }), "tt-dim");
+    print(fill(T.welcome, { name: fullName }));
     run("ls");
   }
   input.focus({ preventScroll: true });

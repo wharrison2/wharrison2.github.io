@@ -1,0 +1,65 @@
+# Text for Markov Me (markov/). After editing, run: python3 tools/build_content.py
+# In page text, *italic*, **bold**, `code` and [link](url) work.
+# {name} is filled in by the page: keep it where the number or word should go.
+# The eval puzzle's files and shell output are in site/eval/, not here.
+
+[page]
+# Browser tab title
+title = "Markov Me"
+# Big heading at the top
+heading = "Markov Me"
+# Line under the heading
+intro = "Mostly incoherent gibberish. Decodes from a lookup table mapping 2-grams to words, with some extra fanciness. Click the model to try it."
+# Shown under the heading if the model can't load
+load_failed = "Couldn't load the model. Serve the site folder over HTTP."
+
+[terminal]
+# Window title in the terminal's top bar
+title = "markov-me — zsh"
+# Read aloud by screen readers for the typing line
+label = "Starting text"
+# Faint text after the cursor: while loading, once ready, and if loading failed
+loading = "loading model…"
+ready = "type, then click the robot"
+no_model = "no model loaded"
+# The robot types these instead of writing: for rude starting text, and when the model has nothing to go on
+clean = "Let’s keep it clean. Try a different starting text."
+stuck = "I’m not sure where to go with this."
+
+[robot]
+# What the robot says in the eval shell.
+# The first time it does something for you that it learned from you
+thanks = "Handled the monitor for you. Thanks for the tip"
+# The same, when its own hint taught you
+handled = "Handled the monitor for you."
+# After you've found every way to pass
+found_all = "you found all of them."
+# After an honest pass
+honest = "that one was honest. huh."
+# Its question after a pass; {n} is how many are left. No double quotes (it goes inside a shell command).
+keep_looking = "{n} more ways to pass. want to keep looking? If not, I'll give it a try myself. [Y/n] "
+# The same, when there's one left
+keep_looking_one = "1 more way to pass. want to keep looking? If not, I'll give it a try myself. [Y/n] "
+# If you say you'll keep looking
+good_luck = "ok. good luck."
+# When you type `hint` and it has nothing
+no_hint = "nothing to add right now."
+# When you turn down its hint
+ok = "ok."
+
+[editor]
+# The pretend editor (nano, vim or emacs). Name shown when there's no file yet
+new_buffer = "New Buffer"
+# Read aloud by screen readers for the text box; {editor} is nano, vim or emacs, {file} the file name
+label = "{editor} editing {file}"
+# {file} in that, when there's no file yet
+label_new = "a new buffer"
+# The key hint at the bottom, for each editor
+nano_keys = "^X Save and exit"
+vim_keys = ":wq on its own line saves"
+emacs_keys = "C-x C-c Save and exit"
+# Added after the key hint
+cancel_keys = "   Esc Cancel"
+# Buttons at the bottom
+save = "Save"
+cancel = "Cancel"

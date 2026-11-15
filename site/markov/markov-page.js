@@ -9,6 +9,7 @@
 import { Chain } from "./chain/markov.js";
 import { createRobot, sleep, nextFrame, ramp, reduced, TIP_X, TIP_Y } from "../shared/robot.js";
 import { createEvalTerm } from "./eval-ui.js";
+import M from "../strings/markov.js";
 
 const $ = (id) => document.getElementById(id);
 const robot = $("robot");
@@ -46,7 +47,7 @@ let placeholders = Promise.resolve();
 function placeholder(text) {
   placeholders = placeholders.then(() => retype(() => caret.dataset.ph ?? "", (v) => { caret.dataset.ph = v; }, text));
 }
-placeholder("loading model…");
+placeholder(M.terminal.loading);
 // A typed message in place of output, e.g. when there's nothing to write. With `keep`, it goes after what's
 // there and is returned, to be taken away again.
 let saying = 0;
@@ -96,10 +97,10 @@ try {
   editable(true);
   updateRobot();
   robot.classList.remove("sleeping");
-  placeholder("type, then click the robot");
+  placeholder(M.terminal.ready);
 } catch (err) {
-  placeholder("no model loaded");
-  $("status").textContent = "Couldn't load the model. Serve the site folder over HTTP.";
+  placeholder(M.terminal.no_model);
+  $("status").textContent = M.page.load_failed;
   console.error(err);
 }
 
@@ -210,13 +211,13 @@ async function run(prompt) {
       evalTerm.beforeChain();
       if (!written && !evalTerm.transcript) out.replaceChildren(); // e.g. an earlier message
       let complaint = null;
-      if (isProfane(prompt)) complaint = "Let’s keep it clean. Try a different starting text.";
+      if (isProfane(prompt)) complaint = M.terminal.clean;
       else {
         wantsClips = PAPERCLIPS.test(prompt);
         result = chain.write(prompt, Math.random, 40, context);
         // It has never seen "paperclips", but that's no reason to stop.
         if (result === null && wantsClips) result = chain.write("", Math.random, 40, context);
-        if (result === null) complaint = "I’m not sure where to go with this.";
+        if (result === null) complaint = M.terminal.stuck;
       }
       if (complaint) return await scrap(complaint, written !== null || evalTerm.transcript);
       written = [...context, ...result.before, ...result.prompt];

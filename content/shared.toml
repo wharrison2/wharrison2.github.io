@@ -1,0 +1,48 @@
+# Text that's on every page: the name, menu and footer, and the pop-ups. After editing, run:
+#   python3 tools/build_content.py
+# {name} is filled in by the page: keep it where the number or word should go.
+
+[site]
+# Your name, top left. On the main pages it's stacked on two lines.
+first_name = "William"
+last_name = "Harrison"
+
+[nav]
+# The menu links
+writing = "Writing"
+projects = "Projects"
+markov = "Markov"
+qr = "QR codes"
+transcription = "Transcription"
+
+[footer]
+# Footer links
+github = "GitHub"
+email = "Email"
+# The button that switches mode
+to_fun = "Switch to fun mode"
+to_professional = "Switch to professional mode"
+
+[mode]
+# The question at the start of each visit
+question = "Professional or fun?"
+professional = "Professional"
+fun = "Fun"
+# Under the two buttons
+note = "You can switch at the bottom of any page."
+
+[mugging]
+# Read aloud by screen readers when the figure appears
+label = "A mysterious figure"
+# The figure's offer, 20 seconds into a visit. {number} is the number below, in a monospace font.
+text = "A mysterious figure approaches and claims they are the host of the simulation, and will create {number} tortured digital minds unless you give this website a star on GitHub. What do you do?"
+number = "10^^^100"
+# The two answers
+star = "Star it"
+refuse = "Refuse"
+
+[paperclips]
+# Read aloud by screen readers for each clip
+clip = "Paperclip"
+# The button that stops the robots
+shut_down = "Shut down"

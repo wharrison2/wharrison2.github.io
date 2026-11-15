@@ -2,7 +2,10 @@
 // Fun mode switches on the gimmicks.
 // Each page sets <html data-mode> from storage in an inline script first, so the styles don't flash.
 
+import S from "../strings/shared.js";
+
 const KEY = "site.mode";
+const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const root = document.documentElement;
 
 function stored() {
@@ -32,8 +35,7 @@ function startGimmicks() {
 
 function labelToggles() {
   document.querySelectorAll("[data-mode-toggle]").forEach((button) => {
-    const other = root.dataset.mode === "fun" ? "professional" : "fun";
-    button.textContent = `Switch to ${other} mode`;
+    button.textContent = root.dataset.mode === "fun" ? S.footer.to_professional : S.footer.to_fun;
   });
 }
 
@@ -43,12 +45,12 @@ function ask() {
   picker.dataset.pcSkip = "";
   picker.innerHTML = `
     <div class="mode-picker-box" role="dialog" aria-modal="true" aria-labelledby="mode-picker-title">
-      <h2 id="mode-picker-title">Professional or fun?</h2>
+      <h2 id="mode-picker-title">${esc(S.mode.question)}</h2>
       <div class="mode-picker-choices">
-        <button type="button" data-choice="professional">Professional</button>
-        <button type="button" data-choice="fun">Fun</button>
+        <button type="button" data-choice="professional">${esc(S.mode.professional)}</button>
+        <button type="button" data-choice="fun">${esc(S.mode.fun)}</button>
       </div>
-      <p>You can switch at the bottom of any page.</p>
+      <p>${esc(S.mode.note)}</p>
     </div>`;
   picker.addEventListener("click", (e) => {
     const choice = e.target.closest("[data-choice]")?.dataset.choice;

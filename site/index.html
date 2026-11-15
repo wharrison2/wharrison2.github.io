@@ -12,54 +12,49 @@
   <script src="shared/look.js"></script>
   <script type="module" src="shared/lorem.js"></script>
   <script type="module" src="shared/mode.js"></script>
-  <title>William Harrison</title>
+  <title data-t="page.title">William Harrison</title>
 </head>
 <body>
   <div class="page">
     <header class="side">
-      <a class="name" href="./">William<br>Harrison</a>
+      <a class="name" href="./"><span data-t="site.first_name">William</span><br><span data-t="site.last_name">Harrison</span></a>
       <nav>
-        <a href="#writing">Writing</a>
-        <a href="#projects">Projects</a>
-        <a href="markov/">Markov</a>
-        <a href="qr/">QR codes</a>
-        <a href="transcription/">Transcription</a>
+        <a href="#writing" data-t="nav.writing">Writing</a>
+        <a href="#projects" data-t="nav.projects">Projects</a>
+        <a href="markov/" data-t="nav.markov">Markov</a>
+        <a href="qr/" data-t="nav.qr" data-fun-only>QR codes</a>
+        <a href="transcription/" data-t="nav.transcription">Transcription</a>
       </nav>
     </header>
 
     <main>
-      <section class="intro">
-        <!-- content:intro -->
+      <section class="intro" data-t="intro">
         <p data-lorem="s3"></p>
         <p data-lorem="s4"></p>
-        <!-- /content:intro -->
       </section>
 
       <section id="writing">
-        <h2>Writing</h2>
+        <h2 data-t="headings.writing">Writing</h2>
         <ol class="index">
-          <li><a href="openai-astra-alignment.html"><span class="title">OpenAI's Astra alignment claims are dubious and there is good evidence it is misaligned</span><span class="leader"></span><time datetime="2026-09-04">Sep 2026</time></a></li>
-          <li><a href="eas-should-be-vegan-for-ea-reasons.html"><span class="title">EAs Should be Vegan, for EA reasons</span><span class="leader"></span><time datetime="2026-07-17">Jul 2026</time></a></li>
-          <li><a href="technical-ai-safety-research-plausibly-increases-p-doom.html"><span class="title">Technical AI Safety Research Plausibly Increases P(doom) Absent Vastly More Advocacy</span><span class="leader"></span><time datetime="2026-04-30">Apr 2026</time></a></li>
-          <li><a href="scope-and-sensitivity.html"><span class="title">Scope and Sensitivity</span><span class="leader"></span><time datetime="2026-04-19">Apr 2026</time></a></li>
+          <li><a href="openai-astra-alignment.html"><span class="title" data-t="posts.astra.title">OpenAI's Astra alignment claims are dubious and there is good evidence it is misaligned</span><span class="leader"></span><time datetime="2026-09-04" data-t="posts.astra.date">Sep 2026</time></a></li>
+          <li><a href="eas-should-be-vegan-for-ea-reasons.html"><span class="title" data-t="posts.vegan.title">EAs Should be Vegan, for EA reasons</span><span class="leader"></span><time datetime="2026-07-17" data-t="posts.vegan.date">Jul 2026</time></a></li>
+          <li><a href="technical-ai-safety-research-plausibly-increases-p-doom.html"><span class="title" data-t="posts.doom.title">Technical AI Safety Research Plausibly Increases P(doom) Absent Vastly More Advocacy</span><span class="leader"></span><time datetime="2026-04-30" data-t="posts.doom.date">Apr 2026</time></a></li>
+          <li><a href="scope-and-sensitivity.html"><span class="title" data-t="posts.scope.title">Scope and Sensitivity</span><span class="leader"></span><time datetime="2026-04-19" data-t="posts.scope.date">Apr 2026</time></a></li>
         </ol>
       </section>
 
       <section id="projects">
-        <h2>Projects</h2>
-        <dl class="projects">
-          <!-- content:projects -->
+        <h2 data-t="headings.projects">Projects</h2>
+        <dl class="projects" data-t="projects">
           <dt><a href="markov/">Markov</a></dt><dd data-lorem="s1"></dd>
-          <dt><a href="qr/">QR codes</a></dt><dd data-lorem="s1"></dd>
           <dt><a href="transcription/">Transcription detector</a></dt><dd>Type a few sentences and a model guesses, from your keystroke timing alone, whether you're writing your own words or copying someone else's. A class project, about 77% accurate.</dd>
-          <!-- /content:projects -->
         </dl>
       </section>
     </main>
 
     <footer>
-      <a href="https://github.com/wharrison2">GitHub</a>
-      <a href="#">Email</a>
+      <a href="https://github.com/wharrison2" data-t="footer.github">GitHub</a>
+      <a href="#" data-t="footer.email">Email</a>
       <button type="button" data-mode-toggle></button>
     </footer>
   </div>

@@ -2,6 +2,8 @@
 // Keystrokes are logged exactly as the study logged them, the five features are computed exactly as parse_json.py
 // computes them, and model.json holds the logistic regression trained on the study's data (standardization included).
 
+import T, { fill } from "../strings/transcription.js";
+
 const model = await (await fetch(new URL("./model.json", import.meta.url))).json();
 
 const MIN_PAUSE_LENGTH_MS = 1500;
@@ -9,24 +11,9 @@ const READY_WORDS = 30; // the study asked for 30 to 75 words
 const EARLY_WORDS = 10;
 const NEW_ESTIMATE_AFTER_MS = 10_000; // a pause this long ends one stretch of typing and starts a fresh estimate
 
-// The study's passages (Wikipedia, CC BY-SA).
-const SOURCES = [
-  { text: "Tower 333 is a 20-story high-rise office building in the central business district of Bellevue, Washington, United States. The building housed the corporate office of Expedia, Inc. from 2008 to 2019. Amazon is planned to take over the lease for the entire building in 2020.", url: "https://en.wikipedia.org/wiki/Tower_333" },
-  { text: "Shopper's World is an open-air shopping center in Framingham, Massachusetts. The original facility (spelled Shoppers' World) is of historical significance as one of the first suburban shopping malls in the United States upon opening in 1951; though it had a central courtyard and covered walkways, it was not fully indoor.", url: "https://en.wikipedia.org/wiki/Shopper%27s_World" },
-  { text: "The National Museum of Galle (Galle National Museum) is one of the national museums of Sri Lanka. It is located in the oldest remaining Dutch building in the Galle fort, Galle, a single storey colonnaded Dutch building built in 1656 as the commissariat store for the Dutch garrison at the fort.", url: "https://en.wikipedia.org/wiki/National_Museum_of_Galle" },
-  { text: "The 1954 Atlantic hurricane season was an above-average Atlantic hurricane season in terms of named storms, with 16 forming. Overall, the season resulted in $751.6 million in damage, the most of any season at the time. The season officially began on June 15, and nine days later the first named storm developed.", url: "https://en.wikipedia.org/wiki/1954_Atlantic_hurricane_season" },
-  { text: "The men's singles was a tennis event held as part of the tennis program at the 1904 Summer Olympics. It was the third time the event was held at the Olympics. There were 27 competitors from 2 nations. The event was won by Beals Wright, with the Americans sweeping the medals.", url: "https://en.wikipedia.org/wiki/Tennis_at_the_1904_Summer_Olympics_%E2%80%93_Men%27s_singles" },
-];
-// Questions you have to stop and think about, rather than ones you can just pour out. A new one each round.
-const QUESTIONS = [
-  "What person has most influenced your thinking, and what is your biggest disagreement with them?",
-  "What's a specific item on your moral to-do list? Why haven't you gotten to it?",
-  "Estimate (without looking it up) how many M&Ms could fit in an adult African elephant, and reason through your answer.",
-  "What's a belief you've changed your mind about in the last few years? What finally changed it?",
-  "What's something you're confident about that most people around you would disagree with?",
-  "Make the strongest case you can against something you care about.",
-  "Roughly how many words have you spoken in your whole life so far? Show your reasoning.",
-];
+// The passages and questions are in content/transcription.toml.
+const SOURCES = T.passages;
+const QUESTIONS = T.typing.questions;
 // A random item, not the one showing now.
 const pickNew = (items, current) => {
   const others = items.filter((x) => x !== current);
@@ -35,9 +22,9 @@ const pickNew = (items, current) => {
 
 // How each feature is shown. Scales run from 0 to `max` (in the feature's own units).
 const SHOW = {
-  proportion_spent_paused: { name: "Time spent paused", fmt: (v) => `${Math.round(v * 100)}%`, max: 0.5 },
-  backspace_runs: { name: "Times you went back to delete", fmt: (v) => `${v.toFixed(1)} per 100 keys`, max: 8 },
-  backspace_run_length: { name: "Keys deleted each time", fmt: (v) => v.toFixed(1), max: 6 },
+  proportion_spent_paused: { name: T.features.paused, fmt: (v) => `${Math.round(v * 100)}%`, max: 0.5 },
+  backspace_runs: { name: T.features.runs, fmt: (v) => fill(T.features.runs_unit, { n: v.toFixed(1) }), max: 8 },
+  backspace_run_length: { name: T.features.run_length, fmt: (v) => v.toFixed(1), max: 6 },
 };
 
 // ---------- the features, as in parse_json.py ----------
@@ -119,10 +106,10 @@ function setTask(next) {
 function reset() {
   const copying = task === "transcription";
   $("source").hidden = !copying;
-  $("reset").textContent = copying ? "New passage" : "New question";
+  $("reset").textContent = copying ? T.typing.new_passage : T.typing.new_question;
   if (copying) {
     const s = pickNew(SOURCES, SOURCES.find((x) => x.text === $("source-text").textContent));
-    $("prompt").textContent = "Type the passage below exactly as written.";
+    $("prompt").textContent = T.typing.copy_prompt;
     $("source-text").textContent = s.text;
     $("source-link").href = s.url;
   } else {
@@ -191,7 +178,7 @@ input.addEventListener("keyup", (e) => logEvent(e, "keyup"));
 for (const type of ["paste", "drop"]) {
   input.addEventListener(type, (e) => {
     e.preventDefault();
-    $("note").textContent = "Pasting is off: it has to see you type.";
+    $("note").textContent = T.typing.paste_off;
   });
 }
 input.addEventListener("input", () => {
@@ -250,7 +237,8 @@ function pct(v, max) { return Math.min(100, Math.max(0, (v / max) * 100)); }
 function update() {
   drawMarks();
   const words = wordsIn(input.value.slice(openStart()));
-  $("count").textContent = (stretches.length ? "This stretch: " : "") + `${words} word${words === 1 ? "" : "s"}`;
+  const count = words === 1 ? T.typing.one_word : fill(T.typing.words, { n: words });
+  $("count").textContent = stretches.length ? fill(T.typing.this_stretch, { count }) : count;
   renderPanel();
 }
 
@@ -262,8 +250,8 @@ function renderPanel() {
   const verdict = document.querySelector(".verdict");
   if (!f || words < EARLY_WORDS) {
     verdict.classList.remove("ready", "past");
-    $("call").textContent = words ? "Keep going" : "Waiting for typing";
-    $("prob").textContent = "It needs a few sentences, about 30 words, to say much.";
+    $("call").textContent = words ? T.verdict.keep_going : T.verdict.waiting;
+    $("prob").textContent = T.verdict.needs_more;
     $("meter").style.width = "50%";
     for (const name of model.features) { rows[name].val.textContent = "–"; rows[name].you.hidden = true; rows[name].push.textContent = ""; }
     return;
@@ -275,18 +263,20 @@ function renderPanel() {
   $("meter").style.width = `${(p * 100).toFixed(1)}%`;
   const copied = p >= 0.5;
   const sure = Math.abs(p - 0.5) * 2;
-  const verdictText = (copied ? "Looks copied" : "Looks like your own words") + (sure < 0.2 ? "?" : "");
+  const unsure = sure < 0.2 ? T.verdict.unsure : "";
   // An earlier stretch is finished, so it's not an "early guess", just a short one.
-  $("call").textContent = st ? `That stretch: ${verdictText.replace("Looks", "looks")}` : (ready ? "" : "Early guess: ") + verdictText;
-  $("prob").textContent = `${Math.round((copied ? p : 1 - p) * 100)}% sure. ` +
-    (ready ? "" : st ? `Only ${words} words, so a rough call.` : `It gets more reliable around ${READY_WORDS} words.`);
+  const call = (copied ? T.verdict.copied : T.verdict.own) + unsure;
+  $("call").textContent = st ? (copied ? T.verdict.earlier_copied : T.verdict.earlier_own) + unsure
+    : ready ? call : fill(T.verdict.early, { verdict: call });
+  const more = ready ? "" : st ? fill(T.verdict.rough, { words }) : fill(T.verdict.more_reliable, { words: READY_WORDS });
+  $("prob").textContent = fill(T.verdict.sure, { pct: Math.round((copied ? p : 1 - p) * 100) }) + (more && " " + more);
   for (const name of model.features) {
     const r = rows[name];
     r.val.textContent = SHOW[name].fmt(f[name]);
     r.you.hidden = false;
     r.you.style.left = `${pct(f[name], SHOW[name].max)}%`;
     const s = push[name];
-    r.push.textContent = Math.abs(s) < 0.15 ? "doesn't say much either way" : s > 0 ? "points to copied" : "points to your own words";
+    r.push.textContent = Math.abs(s) < 0.15 ? T.features.push_none : s > 0 ? T.features.push_copied : T.features.push_own;
   }
 }
 
@@ -314,8 +304,8 @@ setInterval(() => { if (log.length && hovered < 0) renderPanel(); }, 250);
 
 document.querySelectorAll("[data-task]").forEach((b) => b.addEventListener("click", () => setTask(b.dataset.task)));
 $("reset").addEventListener("click", reset);
-$("accuracy").textContent = `about ${Math.round(model.accuracy * 100)}%`;
+$("accuracy").textContent = fill(T.about.accuracy, { pct: Math.round(model.accuracy * 100) });
 setTask("natural");
 if (matchMedia("(pointer: coarse)").matches && !matchMedia("(any-pointer: fine)").matches) {
-  $("note").textContent = "This works best on a physical keyboard: phone keyboards don't report keystrokes the same way.";
+  $("note").textContent = T.typing.phone_note;
 }

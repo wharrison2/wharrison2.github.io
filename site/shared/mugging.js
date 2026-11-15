@@ -1,7 +1,12 @@
 // Pascal's mugging: 20 seconds into a visit, a mysterious figure appears in the corner, once per session.
 
+import S, { fill } from "../strings/shared.js";
+
 const REPO = "https://github.com/wharrison2/wharrison2.github.io";
 const DELAY = 20_000;
+const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+// Escape the text around {number}, then put the number in its own span.
+const offer = fill(esc(S.mugging.text), { number: `<span class="mugging-number">${esc(S.mugging.number)}</span>` });
 
 const session = {
   get(key) { try { return sessionStorage.getItem(key); } catch { return null; } },
@@ -21,14 +26,12 @@ function show() {
   box.className = "mugging";
   box.dataset.pcSkip = "";
   box.setAttribute("role", "alertdialog");
-  box.setAttribute("aria-label", "A mysterious figure");
+  box.setAttribute("aria-label", S.mugging.label);
   box.innerHTML = `
-    <p>A mysterious figure approaches and claims they are the host of the simulation, and will create
-    <span class="mugging-number">10^^^100</span> tortured digital minds unless you give this website a star on
-    GitHub. What do you do?</p>
+    <p>${offer}</p>
     <div class="mugging-choices">
-      <a href="${REPO}" target="_blank" rel="noopener" data-choice="star">Star it</a>
-      <button type="button" data-choice="refuse">Refuse</button>
+      <a href="${REPO}" target="_blank" rel="noopener" data-choice="star">${esc(S.mugging.star)}</a>
+      <button type="button" data-choice="refuse">${esc(S.mugging.refuse)}</button>
     </div>`;
   box.addEventListener("click", (e) => {
     const choice = e.target.closest("[data-choice]")?.dataset.choice;
