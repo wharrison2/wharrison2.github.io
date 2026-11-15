@@ -27,7 +27,7 @@ const S = {
   "done": "{found} anagrams.",
   "done_one": "1 anagram.",
   "none": "No anagrams with these settings.",
-  "capped": "Showing the first {found}. Use fewer words, longer words or a word to include to narrow it down.",
+  "capped": "Showing {found}, leaving out most that share two words with one already shown. Use fewer words, longer words or a word to include to narrow it down.",
   "stopped": "Stopped at {found}.",
   "no_fit": "The phrase doesn't have the letters for “{words}”."
  },

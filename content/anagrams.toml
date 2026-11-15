@@ -47,8 +47,8 @@ searching_one = "Looking for one-word anagrams… {found} so far"
 done = "{found} anagrams."
 done_one = "1 anagram."
 none = "No anagrams with these settings."
-# When it reaches the most it will show; {found} is that number
-capped = "Showing the first {found}. Use fewer words, longer words or a word to include to narrow it down."
+# When there are more than it will show; {found} is how many it shows
+capped = "Showing {found}, leaving out most that share two words with one already shown. Use fewer words, longer words or a word to include to narrow it down."
 # When you press Stop
 stopped = "Stopped at {found}."
 # When the must-include words use letters the phrase doesn't have; {words} is what was typed there

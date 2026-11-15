@@ -27,6 +27,9 @@ const keyOf = (c) => {
 // Lowercase letters only: "William Harrison!" -> "williamharrison".
 export const clean = (text) => text.toLowerCase().normalize("NFD").replace(/[^a-z]/g, "");
 
+// The must-include words, lowercase: "Two  Words!" -> ["two", "words"].
+export const includeWords = (text) => text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/[^a-z]+/).filter(Boolean);
+
 // Every choice of k words from `list`, each choice in list order, repeats allowed (k = how often a code repeats).
 function* choose(list, k, start = 0) {
   if (k === 0) { yield []; return; }
@@ -42,7 +45,7 @@ function* choose(list, k, start = 0) {
  */
 export function* anagrams(phrase, words, { maxWords = Infinity, minLength = 1, include = "", onDepth } = {}) {
   const target = counts(clean(phrase));
-  const fixed = include.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/[^a-z]+/).filter(Boolean);
+  const fixed = includeWords(include);
   for (const w of fixed) {
     const c = counts(w);
     for (let i = 0; i < 26; i++) {

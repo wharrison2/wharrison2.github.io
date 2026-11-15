@@ -24,7 +24,8 @@ if (MAX_WORDS.includes(params.get("words"))) maxWords.value = params.get("words"
 if (MIN_LENGTHS.map(String).includes(params.get("min"))) minLength.value = params.get("min");
 
 let text = null; // the word list
-let worker = null, found = 0, depth = 0, list = null, timer = 0;
+let worker = null, found = 0, depth = 0, timer = 0;
+const lists = new Map(); // word count -> its <ol>
 
 const say = (s) => (status.textContent = s);
 const count = (n, one, many) => (n === 1 ? one : fill(many, { found: nf.format(n) }));
@@ -39,7 +40,7 @@ function search() {
   clearTimeout(timer);
   end();
   results.replaceChildren();
-  list = null;
+  lists.clear();
   found = 0;
   depth = 0;
   remember();
@@ -50,7 +51,6 @@ function search() {
   worker.onmessage = ({ data }) => {
     if (data.type === "depth") {
       depth = data.n;
-      list = null; // a new heading once its first result arrives
       progress();
     } else if (data.type === "found") {
       add(data.items);
@@ -81,21 +81,31 @@ function progress() {
   say(fill(depth === 1 ? T.status.searching_one : T.status.searching, { n: depth, found: nf.format(found) }));
 }
 
+// Results go under a heading for their word count. Held-back ones come at the end, so they can belong to a count
+// that already has a list, or to one that needs a heading between two others.
 function add(items) {
-  if (!list) {
-    const h = document.createElement("h2");
-    h.textContent = depth === 1 ? T.results.one_word : fill(T.results.words, { n: depth });
-    list = document.createElement("ol");
-    results.append(h, list);
-  }
-  const frag = document.createDocumentFragment();
+  const frag = new Map();
   for (const words of items) {
+    const n = words.length;
+    if (!frag.has(n)) frag.set(n, document.createDocumentFragment());
     const li = document.createElement("li");
     li.textContent = words.join(" ");
-    frag.append(li);
+    frag.get(n).append(li);
   }
-  list.append(frag);
+  for (const [n, f] of frag) listFor(n).append(f);
   found += items.length;
+}
+
+function listFor(n) {
+  if (lists.has(n)) return lists.get(n);
+  const h = document.createElement("h2");
+  h.textContent = n === 1 ? T.results.one_word : fill(T.results.words, { n });
+  const list = document.createElement("ol");
+  const after = [...lists.keys()].filter((k) => k > n).sort((a, b) => a - b)[0];
+  if (after === undefined) results.append(h, list);
+  else lists.get(after).previousElementSibling.before(h, list);
+  lists.set(n, list);
+  return list;
 }
 
 // Keep the address in step with the search, without adding to the history.
