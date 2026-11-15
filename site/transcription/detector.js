@@ -262,7 +262,7 @@ function renderPanel() {
   const verdict = document.querySelector(".verdict");
   if (!f || words < EARLY_WORDS) {
     verdict.classList.remove("ready", "past");
-    $("call").textContent = words ? "Keep going" : stretches.length ? "New estimate" : "Waiting for typing";
+    $("call").textContent = words ? "Keep going" : "Waiting for typing";
     $("prob").textContent = "It needs a few sentences, about 30 words, to say much.";
     $("meter").style.width = "50%";
     for (const name of model.features) { rows[name].val.textContent = "–"; rows[name].you.hidden = true; rows[name].push.textContent = ""; }
