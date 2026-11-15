@@ -156,12 +156,12 @@ function restartPause() {
 const openStart = () => (stretches.length ? stretches[stretches.length - 1].end : 0);
 const wordsIn = (text) => text.trim().split(/\s+/).filter(Boolean).length;
 
-// A long pause: what's been typed since the last one becomes a stretch of its own, highlighted by how copied it
+// A long pause or a new line: what's been typed since the last one becomes a stretch of its own, highlighted by how copied it
 // looked, and the next keystroke starts a fresh estimate. Too short a stretch to judge just carries on instead.
 function endStretch() {
   clearTimeout(pauseTimer);
   const start = openStart(), end = input.value.length;
-  const f = features(log, performance.now()); // what the panel showed as it ended, the closing pause included
+  const f = features(log); // as of its last keystroke: the pause that ended it would make every stretch look like your own words
   if (!f || wordsIn(input.value.slice(start, end)) < EARLY_WORDS) return;
   stretches.push({ start, end, f, p: predict(f).p });
   log = [];
@@ -182,7 +182,10 @@ function shiftStretches() {
   for (const st of stretches) { st.start = moved(st.start); st.end = moved(st.end); }
   stretches = stretches.filter((st) => st.end > st.start);
 }
-input.addEventListener("keydown", (e) => logEvent(e, "keydown"));
+input.addEventListener("keydown", (e) => {
+  logEvent(e, "keydown");
+  if (e.key === "Enter" && !e.isComposing) endStretch(); // a new line starts a new stretch (before the newline goes in)
+});
 input.addEventListener("keyup", (e) => logEvent(e, "keyup"));
 // It has to watch you type: pasting and dropping text in are off, as in the study.
 for (const type of ["paste", "drop"]) {
@@ -256,7 +259,6 @@ function renderPanel() {
   const st = stretches[hovered];
   const words = wordsIn(input.value.slice(st ? st.start : openStart(), st ? st.end : undefined));
   const f = st ? st.f : features(log, performance.now());
-  const earlier = st ? "Earlier stretch: " : "";
   const verdict = document.querySelector(".verdict");
   if (!f || words < EARLY_WORDS) {
     verdict.classList.remove("ready", "past");
@@ -273,10 +275,13 @@ function renderPanel() {
   $("meter").style.width = `${(p * 100).toFixed(1)}%`;
   const copied = p >= 0.5;
   const sure = Math.abs(p - 0.5) * 2;
-  $("call").textContent = earlier + (ready ? "" : "Early guess: ") + (copied ? "Looks copied" : "Looks like your own words") + (sure < 0.2 ? "?" : "");
+  const verdictText = (copied ? "Looks copied" : "Looks like your own words") + (sure < 0.2 ? "?" : "");
+  // An earlier stretch is finished, so it's not an "early guess", just a short one.
+  $("call").textContent = st ? `That stretch: ${verdictText.replace("Looks", "looks")}` : (ready ? "" : "Early guess: ") + verdictText;
   const right = copied === (task === "transcription");
   $("prob").textContent = `${Math.round((copied ? p : 1 - p) * 100)}% sure. ` +
-    (ready ? (right ? "That's right." : "That's wrong, as it is about a quarter of the time.") : `It gets more reliable around ${READY_WORDS} words.`);
+    (ready ? (right ? "That's right." : "That's wrong, as it is about a quarter of the time.")
+      : st ? `Only ${words} words, so a rough call.` : `It gets more reliable around ${READY_WORDS} words.`);
   for (const name of model.features) {
     const r = rows[name];
     r.val.textContent = SHOW[name].fmt(f[name]);
