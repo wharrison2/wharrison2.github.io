@@ -104,6 +104,11 @@ const S = {
    "about": "A draft game about running an AI lab racing its rivals toward powerful AI, trading off revenue, safety research and the regulators. The full version, also a draft, is at [alignmentgame.net](https://alignmentgame.net)."
   },
   {
+   "name": "SAR pair viewer",
+   "link": "sar-viewer/",
+   "about": "Two Sentinel-1 radar images of Weddell Sea ice, four days apart, overlaid or side by side."
+  },
+  {
    "name": "Block Blast solver",
    "link": "block-blast/",
    "about": "Draw your board and the three pieces you were dealt, and it finds the order and spots that clear the most squares."
@@ -112,11 +117,6 @@ const S = {
    "name": "Anagram finder",
    "link": "anagrams/",
    "about": "Every way to rearrange a phrase into real words."
-  },
-  {
-   "name": "SAR pair viewer",
-   "link": "sar-viewer/",
-   "about": "Two Sentinel-1 radar images of Weddell Sea ice, four days apart, overlaid or side by side."
   }
  ]
 };
