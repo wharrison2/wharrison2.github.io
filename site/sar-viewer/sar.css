@@ -7,6 +7,20 @@
 .modes button + button { border-left: 1px solid var(--line); }
 .modes button[aria-selected="true"] { background: var(--accent); color: var(--accent-fg); }
 
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 24px; margin-bottom: 12px; font-size: 0.85rem; }
+.ctl-label { color: var(--muted); margin-right: 8px; }
+.basemaps { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px 0; }
+.basemaps button {
+  font: 600 0.8rem/1 var(--font-body); padding: 7px 10px; cursor: pointer;
+  border: 1px solid var(--line); background: transparent; color: var(--muted);
+}
+.basemaps button:first-of-type { border-radius: var(--radius) 0 0 var(--radius); }
+.basemaps button + button { border-left: 0; border-radius: 0 var(--radius) var(--radius) 0; }
+.basemaps button[aria-pressed="true"] { background: var(--surface); color: var(--fg); }
+.opacity { display: inline-flex; align-items: center; }
+.opacity input { width: 140px; accent-color: var(--accent); }
+.photo-note { margin: -4px 0 12px; font-size: 0.85rem; color: var(--muted); }
+
 .viewer { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .viewer[data-view="overlaid"] { grid-template-columns: 1fr; }
 .viewer[data-view="overlaid"] #pane-b { display: none; }
@@ -27,8 +41,8 @@
 .about { margin-top: 56px; max-width: 40em; }
 .about h2 { font: var(--display-weight) 1.4rem/1.2 var(--font-display); margin: 0 0 10px; }
 
-/* Outside the overlap, covered; the overlap's outline on the full images */
-.map .sar-mask { fill: var(--surface); fill-opacity: 1; stroke: none; }
+/* Outside the overlap, mostly covered; the overlap's outline on the full images */
+.map .sar-mask { fill: var(--surface); fill-opacity: 0.8; stroke: none; }
 .map .sar-outline { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 5 4; stroke-opacity: 0.9; }
 
 /* Leaflet in the site's colors */
@@ -37,6 +51,8 @@
 .map .leaflet-bar a { background: var(--bg); color: var(--fg); border-bottom-color: var(--line); }
 .map .leaflet-bar a:hover { background: var(--surface); }
 .map .leaflet-bar a.leaflet-disabled { color: var(--muted); background: var(--bg); }
+.map .leaflet-control-attribution { font-size: 0.68rem; background: color-mix(in srgb, var(--bg) 80%, transparent); color: var(--muted); }
+.map .leaflet-control-attribution a { color: inherit; }
 
 @media (max-width: 640px) {
   .viewer { grid-template-columns: 1fr; }

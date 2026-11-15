@@ -12,6 +12,8 @@
   <link rel="stylesheet" href="sar.css">
   <script src="../shared/look.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.11.0/proj4.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4leaflet/1.0.2/proj4leaflet.min.js"></script>
   <script type="module" src="../shared/mode.js"></script>
   <script type="module" src="sar.js"></script>
   <title data-t="page.title">SAR pair viewer</title>
@@ -36,6 +38,16 @@
         <button type="button" role="tab" data-view="full" aria-selected="false" data-t="modes.full">Full images</button>
       </div>
 
+      <div class="controls">
+        <div class="basemaps" role="group" aria-label="Background" data-t-aria-label="basemap.label">
+          <span class="ctl-label" data-t="basemap.label">Background</span>
+          <button type="button" data-base="blue" aria-pressed="true" data-t="basemap.blue_marble">Blue Marble</button>
+          <button type="button" data-base="photo" aria-pressed="false" data-t="basemap.photo">Satellite photo on the day</button>
+        </div>
+        <label class="opacity"><span class="ctl-label" data-t="opacity.label">Radar opacity</span> <input type="range" id="opacity" min="0" max="1" step="0.05" value="0.85"></label>
+      </div>
+      <p class="photo-note" id="photo-note" hidden data-t="basemap.photo_note">Sea ice and cloud both look white in an optical photo, so here the radar shows much more than the photo does.</p>
+
       <div class="viewer" id="viewer" data-view="overlaid">
         <figure class="pane" id="pane-a">
           <figcaption id="label-a"></figcaption>
@@ -49,13 +61,12 @@
       <p class="key" id="key" data-t="maps.key">Red where the first image is brighter, cyan where the second is; gray where they match.</p>
       <div class="under">
         <span id="coords" data-t="maps.coords_hint">Point at a map for its coordinates.</span>
-        <span class="credit" data-t="maps.credit">Contains modified Copernicus Sentinel data 2024.</span>
       </div>
 
       <section class="about">
         <h2 data-t="about.heading">About</h2>
         <div data-t="about.body">
-          <p>This is a static version of a viewer I wrote for finding pairs of Sentinel-1 images of the same spot, before and after an event. Both images are warped from their ground control points onto one polar stereographic grid, at 80 m a pixel, and shown in decibels with the same brightness scale.</p>
+          <p>This is a static version of a viewer I wrote for finding pairs of Sentinel-1 images of the same spot, before and after an event. Both images are warped from their ground control points onto NASA's polar stereographic map grid, at 64 m a pixel, and shown in decibels with the same brightness scale, over NASA's Blue Marble or that day's MODIS photo.</p>
           <p><a href="https://github.com/wharrison2/satellite_imagery_visualizer">Code on GitHub</a></p>
         </div>
       </section>

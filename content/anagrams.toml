@@ -8,7 +8,7 @@ title = "Anagrams"
 # Big heading at the top
 heading = "Anagrams"
 # Line under the heading
-intro = "Type a word or phrase to see every set of words that uses exactly its letters. It all runs in your browser."
+intro = "Type a word or phrase and see (some of) its anagrams."
 
 [search]
 # Label over the main box
@@ -64,7 +64,7 @@ one_word = "1 word"
 heading = "About"
 # The explanation
 body = """
-A port of [a C++ anagram finder](https://github.com/wharrison2/anagrams) I wrote. It keeps the words whose letters fit inside your phrase, groups the ones made of the same letters, then searches for groups that add up to exactly your letters, longest words first. Each group can be any of its words, so one combination of letters can give many anagrams.
+A port of [a C++ anagram finder](https://github.com/wharrison2/anagrams) I wrote. It filters for words that can be spelled from the phrase, groups them by letter count, then searches for groups that add to precisely your letters.
 
 The dictionary has about 95,000 English words, including plenty of obscure ones, with rude words taken out.
 """

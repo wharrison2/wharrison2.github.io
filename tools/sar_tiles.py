@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 """Make the map tiles for the SAR pair viewer (site/sar-viewer/) from two Sentinel-1 GRD TIFFs.
 
-    python3 tools/sar_tiles.py BEFORE.tiff AFTER.tiff [--out site/sar-viewer/tiles] [--res 80]
+    python3 tools/sar_tiles.py BEFORE.tiff AFTER.tiff [--out site/sar-viewer/tiles] [--zmax 7] [--quality 50]
 
 The TIFFs carry no map projection, only ground control points (lon/lat for a grid of pixels), as in the user's
 viewer (geo_utils.py). Both scenes are warped from their GCPs with a thin-plate spline (GDAL's GCP_TPS, the same
-transform geo_utils.py fits with scipy) onto one shared grid in Antarctic polar stereographic (EPSG:3031) at --res
-metres a pixel, averaging the pixels that fall in each cell.
+transform geo_utils.py fits with scipy) onto Antarctic polar stereographic (EPSG:3031), averaging the pixels that
+fall in each cell.
+
+The tiles are cut on NASA GIBS's EPSG:3031 tile grid, so they line up with its basemaps: top-left corner
+(-4194304, 4194304) m, 512 px tiles, 8192 / 2^z metres a pixel at zoom z. Full resolution is --zmax (7 = 64 m).
 
 Brightness is in decibels (20 log10 of the amplitude), stretched to 8 bits with one stretch for both dates (their
 pooled 2nd to 98th percentiles), so the two read the same. No-data is transparent.
 
-It writes WebP tiles, 256 px, z/x/y, for zoom levels 0..Z (Z is full resolution):
+It writes WebP tiles, 512 px, z/x/y (x = tile column, y = tile row, as GIBS numbers them), from zmin (the level
+where both scenes fit in about one tile) to zmax:
   before/, after/   each scene in gray
   overlay/          red = before, cyan = after, only where both have data
-and meta.json, with the tiles that exist (empty ones aren't written), the grid (origin, resolution, size), the zoom levels, the scene dates, each scene's footprint
-and their overlap (convex hulls of the GCPs, in full-resolution pixels), and a few GCPs per scene for checking
+and meta.json, with the tiles that exist (empty ones aren't written), the zoom levels, the scene dates, each scene's
+footprint and their overlap (convex hulls of the GCPs, in EPSG:3031 metres), and a few GCPs per scene for checking
 alignment. Needs rasterio, numpy, Pillow.
 """
 import argparse, json, math, re, shutil
@@ -28,8 +32,10 @@ from rasterio.transform import from_origin
 from rasterio.warp import Resampling, reproject, transform as warp_points
 from PIL import Image
 
-TILE = 256
+TILE = 512
 DST = CRS.from_epsg(3031)
+# NASA GIBS's EPSG:3031 tile grid
+X0, Y0, RES0 = -4194304.0, 4194304.0, 8192.0
 
 
 def scene_date(path):
@@ -102,19 +108,21 @@ def to_db(a):
         return 20 * np.log10(a)
 
 
-def save_tiles(name, rgba, z, out, quality, index):
-    """One zoom level of tiles; tiles with nothing in them aren't written (index lists the ones that are).
-    Returns the count and bytes."""
+def save_tiles(name, rgba, z, ox, oy, out, quality, index):
+    """One zoom level of tiles. (ox, oy) is where the array's top-left pixel sits on the GIBS grid at this level, in
+    pixels. Tiles with nothing in them aren't written (index lists the ones that are). Returns the count and bytes."""
+    rgba = np.pad(rgba, ((oy % TILE, 0), (ox % TILE, 0), (0, 0)))  # start the array on a tile edge
     h, w = rgba.shape[:2]
     n = size = 0
     have = []
-    for ty in range(math.ceil(h / TILE)):
-        for tx in range(math.ceil(w / TILE)):
-            t = rgba[ty * TILE:(ty + 1) * TILE, tx * TILE:(tx + 1) * TILE]
+    for row in range(math.ceil(h / TILE)):
+        for col in range(math.ceil(w / TILE)):
+            t = rgba[row * TILE:(row + 1) * TILE, col * TILE:(col + 1) * TILE]
             if not t[..., 3].any():
                 continue
             if t.shape[0] < TILE or t.shape[1] < TILE:
                 t = np.pad(t, ((0, TILE - t.shape[0]), (0, TILE - t.shape[1]), (0, 0)))
+            tx, ty = col + ox // TILE, row + oy // TILE
             f = out / name / str(z) / str(tx) / ("%d.webp" % ty)
             f.parent.mkdir(parents=True, exist_ok=True)
             Image.fromarray(t, "RGBA").save(f, "WEBP", quality=quality, alpha_quality=60, method=6)
@@ -140,8 +148,8 @@ def main():
     ap.add_argument("before")
     ap.add_argument("after")
     ap.add_argument("--out", default="site/sar-viewer/tiles")
-    ap.add_argument("--res", type=float, default=80, help="metres a pixel at full zoom (Sentinel-1 EW GRDM is 40)")
-    ap.add_argument("--quality", type=int, default=55, help="WebP quality for the tiles")
+    ap.add_argument("--zmax", type=int, default=7, help="full-resolution zoom on the GIBS grid (7 = 64 m a pixel; the source is 40)")
+    ap.add_argument("--quality", type=int, default=50, help="WebP quality for the tiles")
     args = ap.parse_args()
     out = Path(args.out)
 
@@ -151,77 +159,78 @@ def main():
             gcps, _ = src.gcps
         scenes.append(dict(path=p, gcps=gcps_xy(gcps), date=scene_date(p)))
 
-    # The shared grid: the union of both scenes' GCP extents, padded a little.
+    # Both scenes' GCP extent, padded a little.
     xs = np.concatenate([s["gcps"][2] for s in scenes])
     ys = np.concatenate([s["gcps"][3] for s in scenes])
-    pad = 5 * args.res
-    x0, y1 = xs.min() - pad, ys.max() + pad
-    w = int(math.ceil((xs.max() + pad - x0) / args.res))
-    h = int(math.ceil((y1 - (ys.min() - pad)) / args.res))
-    dst_transform = from_origin(x0, y1, args.res, args.res)
-    print("grid %d x %d at %g m" % (w, h, args.res))
+    res = RES0 / 2 ** args.zmax
+    pad = 5 * res
+    xmin, xmax, ymin, ymax = xs.min() - pad, xs.max() + pad, ys.min() - pad, ys.max() + pad
+    # The coarsest level: where the extent is about one tile across.
+    zmin = max(0, min(args.zmax, math.floor(math.log2(RES0 * TILE / max(xmax - xmin, ymax - ymin)))))
+    # The full-resolution grid, with its edges on whole pixels of the coarsest level, so every level halves exactly.
+    snap = RES0 / 2 ** zmin
+    x0 = X0 + math.floor((xmin - X0) / snap) * snap
+    y1 = Y0 - math.floor((Y0 - ymax) / snap) * snap
+    w = int(math.ceil((xmax - x0) / snap) * snap / res)
+    h = int(math.ceil((y1 - ymin) / snap) * snap / res)
+    dst_transform = from_origin(x0, y1, res, res)
+    print("grid %d x %d at %g m, zoom %d..%d" % (w, h, res, zmin, args.zmax))
 
     amps = [warp(s["path"], dst_transform, (h, w)) for s in scenes]
     dbs = [to_db(a) for a in amps]
     pooled = np.concatenate([d[np.isfinite(d)] for d in dbs])
     lo, hi = (float(v) for v in np.percentile(pooled, (2, 98)))
+    del dbs, pooled
     print("stretch %.1f..%.1f dB" % (lo, hi))
 
-    # Zoom levels: Z is full resolution; 0 is the level where the whole grid fits in about one tile.
-    zmax = max(0, math.ceil(math.log2(max(w, h) / TILE)))
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
     stats, index = {}, {}
     level = amps
-    for z in range(zmax, -1, -1):
+    for z in range(args.zmax, zmin - 1, -1):
+        r = RES0 / 2 ** z
+        ox, oy = int(round((x0 - X0) / r)), int(round((Y0 - y1) / r))
         d = [to_db(a) for a in level]
         g = [np.clip((x - lo) / (hi - lo), 0, 1) for x in d]
         ok = [np.isfinite(x) for x in d]
         u8 = [np.nan_to_num(x * 255, nan=0).round().astype(np.uint8) for x in g]
         for name, v, m in (("before", u8[0], ok[0]), ("after", u8[1], ok[1])):
             rgba = np.dstack([v, v, v, np.where(m, 255, 0).astype(np.uint8)])
-            n, b = save_tiles(name, rgba, z, out, args.quality, index)
+            n, b = save_tiles(name, rgba, z, ox, oy, out, args.quality, index)
             stats[name] = [stats.get(name, [0, 0])[0] + n, stats.get(name, [0, 0])[1] + b]
         both = ok[0] & ok[1]
         rgba = np.dstack([u8[0], u8[1], u8[1], np.where(both, 255, 0).astype(np.uint8)])
-        n, b = save_tiles("overlay", rgba, z, out, args.quality, index)
+        n, b = save_tiles("overlay", rgba, z, ox, oy, out, args.quality, index)
         stats["overlay"] = [stats.get("overlay", [0, 0])[0] + n, stats.get("overlay", [0, 0])[1] + b]
         level = [downsample(a) for a in level]
 
-    # Footprints and overlap, as convex hulls of the GCPs (as in geo_utils.py), in full-resolution grid pixels.
-    def px(x, y):
-        return ((x - x0) / args.res, (y1 - y) / args.res)
-    feet = []
-    for s in scenes:
-        _, _, gx, gy, _, _ = s["gcps"]
-        # Grid pixels have y going down, which flips the winding; hull() wants y up, so hull in (x, -y).
-        hp = hull([(a, -b) for a, b in (px(x, y) for x, y in zip(gx, gy))])
-        feet.append(hp)
+    # Footprints and overlap, as convex hulls of the GCPs (as in geo_utils.py), in EPSG:3031 metres.
+    feet = [hull(list(zip(s["gcps"][2], s["gcps"][3]))) for s in scenes]
     overlap = clip(feet[0], feet[1])
-    flip = lambda poly: [[round(a, 1), round(-b, 1)] for a, b in poly]
+    metres = lambda poly: [[round(a, 1), round(b, 1)] for a, b in poly]
 
-    # A few GCPs per scene for checking the alignment: the source pixel, its lon/lat, where it lands on the grid.
+    # A few GCPs per scene for checking the alignment: the source pixel and its lon/lat.
     checks = []
     for s in scenes:
         col, row, gx, gy, lon, lat = s["gcps"]
-        idx = np.linspace(0, len(col) - 1, 9).round().astype(int)
-        checks.append([dict(col=float(col[i]), row=float(row[i]), lon=float(lon[i]), lat=float(lat[i]),
-                            gx=round(px(gx[i], gy[i])[0], 2), gy=round(px(gx[i], gy[i])[1], 2)) for i in idx])
+        idx = np.linspace(0, len(col) - 1, 10).round().astype(int)
+        checks.append([dict(col=float(col[i]), row=float(row[i]), lon=float(lon[i]), lat=float(lat[i])) for i in idx])
 
     meta = dict(
-        crs="EPSG:3031", origin=[float(x0), float(y1)], res=args.res, width=w, height=h, tile=TILE, maxZoom=zmax,
+        crs="EPSG:3031", grid=dict(origin=[X0, Y0], res0=RES0, tile=TILE), minZoom=zmin, maxZoom=args.zmax,
+        extent=[float(x0), float(y1 - h * res), float(x0 + w * res), float(y1)],
         stretch_db=[round(lo, 2), round(hi, 2)],
-        scenes=[dict(date=s["date"], file=Path(s["path"]).name, footprint=flip(f), gcp_checks=c)
+        scenes=[dict(date=s["date"], file=Path(s["path"]).name, footprint=metres(f), gcp_checks=c)
                 for s, f, c in zip(scenes, feet, checks)],
-        overlap=flip(overlap),
+        overlap=metres(overlap),
         tiles=index,
     )
     (out / "meta.json").write_text(json.dumps(meta, indent=1))
     total = sum(b for _, b in stats.values())
     for k, (n, b) in stats.items():
         print("%-8s %4d tiles  %6.2f MB" % (k, n, b / 1e6))
-    print("total    %.2f MB, zoom 0..%d" % (total / 1e6, zmax))
+    print("total    %.2f MB" % (total / 1e6))
 
 
 if __name__ == "__main__":

@@ -15,6 +15,20 @@ overlaid = "Overlaid"
 overlap = "Overlap only"
 full = "Full images"
 
+[basemap]
+# The buttons that pick what's under the radar
+label = "Background"
+blue_marble = "Blue Marble"
+photo = "Satellite photo on the day"
+# Under the buttons while the photo is showing
+photo_note = "Sea ice and cloud both look white in an optical photo, so here the radar shows much more than the photo does."
+# Added to the overlaid map's caption while the photo is showing. {date} is the photo's day.
+photo_date = "photo from {date}"
+
+[opacity]
+# The slider for how see-through the radar is
+label = "Radar opacity"
+
 [maps]
 # Above each map. {date} is the image's date and time.
 before = "Before: {date}"
@@ -31,13 +45,14 @@ coords_hint = "Point at a map for its coordinates."
 # While the map library loads, and if it can't
 loading = "Loading the maps…"
 failed = "The map library didn't load, so the maps can't be shown."
-# The data credit, under the maps
+# The data credits, in the corner of each map
 credit = "Contains modified Copernicus Sentinel data 2024."
+basemap_credit = "Background and coastlines: NASA GIBS (Blue Marble, MODIS Terra)."
 
 [about]
 heading = "About"
 body = """
-This is a static version of a viewer I wrote for finding pairs of Sentinel-1 images of the same spot, before and after an event. Both images are warped from their ground control points onto one polar stereographic grid, at 80 m a pixel, and shown in decibels with the same brightness scale.
+This is a static version of a viewer I wrote for finding pairs of Sentinel-1 images of the same spot, before and after an event. Both images are warped from their ground control points onto NASA's polar stereographic map grid, at 64 m a pixel, and shown in decibels with the same brightness scale, over NASA's Blue Marble or that day's MODIS photo.
 
 [Code on GitHub](https://github.com/wharrison2/satellite_imagery_visualizer)
 """

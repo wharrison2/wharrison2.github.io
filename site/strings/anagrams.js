@@ -3,7 +3,7 @@ const S = {
  "page": {
   "title": "Anagrams",
   "heading": "Anagrams",
-  "intro": "Type a word or phrase to see every set of words that uses exactly its letters. It all runs in your browser."
+  "intro": "Type a word or phrase and see (some of) its anagrams."
  },
  "search": {
   "phrase": "Word or phrase",
@@ -37,7 +37,7 @@ const S = {
  },
  "about": {
   "heading": "About",
-  "body": "A port of [a C++ anagram finder](https://github.com/wharrison2/anagrams) I wrote. It keeps the words whose letters fit inside your phrase, groups the ones made of the same letters, then searches for groups that add up to exactly your letters, longest words first. Each group can be any of its words, so one combination of letters can give many anagrams.\n\nThe dictionary has about 95,000 English words, including plenty of obscure ones, with rude words taken out.\n"
+  "body": "A port of [a C++ anagram finder](https://github.com/wharrison2/anagrams) I wrote. It filters for words that can be spelled from the phrase, groups them by letter count, then searches for groups that add to precisely your letters.\n\nThe dictionary has about 95,000 English words, including plenty of obscure ones, with rude words taken out.\n"
  }
 };
 export default S;
