@@ -278,10 +278,8 @@ function renderPanel() {
   const verdictText = (copied ? "Looks copied" : "Looks like your own words") + (sure < 0.2 ? "?" : "");
   // An earlier stretch is finished, so it's not an "early guess", just a short one.
   $("call").textContent = st ? `That stretch: ${verdictText.replace("Looks", "looks")}` : (ready ? "" : "Early guess: ") + verdictText;
-  const right = copied === (task === "transcription");
   $("prob").textContent = `${Math.round((copied ? p : 1 - p) * 100)}% sure. ` +
-    (ready ? (right ? "That's right." : "That's wrong, as it is about a quarter of the time.")
-      : st ? `Only ${words} words, so a rough call.` : `It gets more reliable around ${READY_WORDS} words.`);
+    (ready ? "" : st ? `Only ${words} words, so a rough call.` : `It gets more reliable around ${READY_WORDS} words.`);
   for (const name of model.features) {
     const r = rows[name];
     r.val.textContent = SHOW[name].fmt(f[name]);
