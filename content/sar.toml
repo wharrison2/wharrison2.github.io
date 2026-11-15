@@ -1,0 +1,43 @@
+# Text for the SAR pair viewer (site/sar-viewer/). After editing, run: python3 tools/build_content.py
+
+[page]
+# The browser tab
+title = "SAR pair viewer"
+# The big heading
+heading = "SAR pair viewer"
+# Under the heading
+intro = "Two Sentinel-1 radar images of the Weddell Sea, off the Antarctic Peninsula, taken four days apart. Compare them overlaid or side by side."
+
+[modes]
+# Read aloud by screen readers for the three buttons
+label = "How to show the pair"
+overlaid = "Overlaid"
+overlap = "Overlap only"
+full = "Full images"
+
+[maps]
+# Above each map. {date} is the image's date and time.
+before = "Before: {date}"
+after = "After: {date}"
+# Above the overlaid map. {before} and {after} are the two dates.
+overlaid = "{before} and {after}"
+# Under the overlaid map: what the colors mean
+key = "Red where the first image is brighter, cyan where the second is; gray where they match."
+# Read aloud by screen readers for each map
+before_label = "Map of the earlier image"
+after_label = "Map of the later image"
+# Under the maps, before the pointer is on one
+coords_hint = "Point at a map for its coordinates."
+# While the map library loads, and if it can't
+loading = "Loading the maps…"
+failed = "The map library didn't load, so the maps can't be shown."
+# The data credit, under the maps
+credit = "Contains modified Copernicus Sentinel data 2024."
+
+[about]
+heading = "About"
+body = """
+This is a static version of a viewer I wrote for finding pairs of Sentinel-1 images of the same spot, before and after an event. Both images are warped from their ground control points onto one polar stereographic grid, at 80 m a pixel, and shown in decibels with the same brightness scale.
+
+[Code on GitHub](https://github.com/wharrison2/satellite_imagery_visualizer)
+"""

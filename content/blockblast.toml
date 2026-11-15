@@ -1,0 +1,75 @@
+# Text for the Block Blast solver (block-blast/). After editing, run: python3 tools/build_content.py
+# In page text, *italic*, **bold**, `code` and [link](url) work.
+# {name} is filled in by the page: keep it where the number or word should go.
+
+[page]
+# Browser tab title
+title = "Block Blast solver"
+# Big heading at the top
+heading = "Block Blast solver"
+# Line under the heading
+intro = "Copy your board and the three pieces you were dealt, and it works out where to put them: every order, every spot, and the one that clears the most."
+
+[board]
+# Heading over the 8 by 8 board
+heading = "Your board"
+# Hint under the heading
+hint = "Click or drag to fill the squares that are taken."
+# Read aloud by screen readers for the board
+label = "Board"
+# Read aloud for each square; {row} and {col} are numbers from 1 to 8
+cell = "Row {row}, column {col}"
+# Button that empties the board
+clear = "Clear board"
+
+[pieces]
+# Heading over the three piece slots
+heading = "Your pieces"
+# Hint under the heading
+hint = "Draw each piece in a box, or pick it from the shapes below."
+# Read aloud for a piece box; {n} is 1, 2 or 3
+slot = "Piece {n}"
+# Read aloud for each square of a piece box
+cell = "Piece {n}, row {row}, column {col}"
+# Button under a piece box that empties it
+clear = "Clear"
+# Read aloud for the list of shapes to pick from
+palette = "Shapes"
+# Read aloud for a shape button; {n} is the number of squares
+shape = "Shape with {n} squares"
+
+[result]
+# Heading over the answer
+heading = "Best moves"
+# Shown before any piece is set
+empty = "Add a piece to see where it goes."
+# Shown when the pieces can't all go on the board
+stuck = "These pieces can't all fit on this board."
+# Over each step's board; {n} is the step number
+step = "Step {n}"
+# Under a step's board: which piece goes where
+move = "Piece {piece} at row {row}, column {col}"
+# After the move line, when it clears lines
+clears = "Clears {n} lines."
+# Same, for one line
+clears_one = "Clears a line."
+# Over the last board
+after = "After"
+# Under the last board
+left = "{n} squares filled"
+# Same, for one square
+left_one = "1 square filled"
+# Same, when the board is empty
+left_none = "Board empty"
+# Button that plays the moves onto your board and empties the pieces, for the next three
+play = "Play these moves"
+
+[about]
+# Heading of the explanation at the bottom
+heading = "How it picks"
+# The explanation
+body = """
+It tries the pieces in every order and every spot, clearing full rows and columns after each one, just as the game does. The best sequence is the one that takes the most squares off the board. On a tie, it picks the board with the least edge between filled and empty squares, so what's left is in solid blocks rather than scattered holes that new pieces can't fill.
+
+[Code on GitHub](https://github.com/wharrison2/block_blast_solver)
+"""

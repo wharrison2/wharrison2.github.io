@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="../shared/clip.svg">
+  <script src="../shared/flags.js"></script>
+  <script src="../shared/tool-head.js"></script>
+  <link rel="stylesheet" href="../shared/shared.css">
+  <link rel="stylesheet" href="../shared/tools.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="sar.css">
+  <script src="../shared/look.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script type="module" src="../shared/mode.js"></script>
+  <script type="module" src="sar.js"></script>
+  <title data-t="page.title">SAR pair viewer</title>
+</head>
+<body>
+  <div class="page">
+    <header class="bar">
+      <a class="home" data-home href="../"><span data-t="site.first_name">William</span> <span data-t="site.last_name">Harrison</span></a>
+      <nav>
+        <a href="../markov/" data-t="nav.markov">Markov</a>
+        <a href="../transcription/" data-t="nav.transcription">Transcription</a>
+      </nav>
+    </header>
+
+    <main>
+      <h1 data-t="page.heading">SAR pair viewer</h1>
+      <p class="sub" data-t="page.intro">Two Sentinel-1 radar images of the Weddell Sea, off the Antarctic Peninsula, taken four days apart. Compare them overlaid or side by side.</p>
+
+      <div class="modes" role="tablist" aria-label="How to show the pair" data-t-aria-label="modes.label">
+        <button type="button" role="tab" data-view="overlaid" aria-selected="true" data-t="modes.overlaid">Overlaid</button>
+        <button type="button" role="tab" data-view="overlap" aria-selected="false" data-t="modes.overlap">Overlap only</button>
+        <button type="button" role="tab" data-view="full" aria-selected="false" data-t="modes.full">Full images</button>
+      </div>
+
+      <div class="viewer" id="viewer" data-view="overlaid">
+        <figure class="pane" id="pane-a">
+          <figcaption id="label-a"></figcaption>
+          <div class="map" id="map-a" role="region" aria-label="Map of the earlier image" data-t-aria-label="maps.before_label"></div>
+        </figure>
+        <figure class="pane" id="pane-b">
+          <figcaption id="label-b"></figcaption>
+          <div class="map" id="map-b" role="region" aria-label="Map of the later image" data-t-aria-label="maps.after_label"></div>
+        </figure>
+      </div>
+      <p class="key" id="key" data-t="maps.key">Red where the first image is brighter, cyan where the second is; gray where they match.</p>
+      <div class="under">
+        <span id="coords" data-t="maps.coords_hint">Point at a map for its coordinates.</span>
+        <span class="credit" data-t="maps.credit">Contains modified Copernicus Sentinel data 2024.</span>
+      </div>
+
+      <section class="about">
+        <h2 data-t="about.heading">About</h2>
+        <div data-t="about.body">
+          <p>This is a static version of a viewer I wrote for finding pairs of Sentinel-1 images of the same spot, before and after an event. Both images are warped from their ground control points onto one polar stereographic grid, at 80 m a pixel, and shown in decibels with the same brightness scale.</p>
+          <p><a href="https://github.com/wharrison2/satellite_imagery_visualizer">Code on GitHub</a></p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="bottom">
+      <a href="https://github.com/wharrison2" data-t="footer.github">GitHub</a>
+      <button type="button" data-mode-toggle></button>
+    </footer>
+  </div>
+</body>
+</html>

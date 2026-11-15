@@ -1,0 +1,70 @@
+# Text for the anagram finder (anagrams/). After editing, run: python3 tools/build_content.py
+# In page text, *italic*, **bold**, `code` and [link](url) work.
+# {name} is filled in by the page: keep it where the number or word should go.
+
+[page]
+# Browser tab title
+title = "Anagrams"
+# Big heading at the top
+heading = "Anagrams"
+# Line under the heading
+intro = "Type a word or phrase to see every set of words that uses exactly its letters. It all runs in your browser."
+
+[search]
+# Label over the main box
+phrase = "Word or phrase"
+# Faint text in the empty box
+placeholder = "Type something to rearrange"
+# What's in the box when the page opens
+example = "dormitory"
+# Label over the most-words menu
+max_words = "Most words"
+# The last choice in that menu
+any = "Any number"
+# Label over the shortest-word menu
+min_length = "Shortest word"
+# The choices in that menu; {n} is a number of letters
+letters = "{n} letters"
+one_letter = "1 letter"
+# Label over the must-include box
+include = "Must include"
+# Faint text in the must-include box
+include_placeholder = "Optional words"
+# Button that stops a long search
+stop = "Stop"
+
+[status]
+# While the word list downloads
+loading = "Loading the word list…"
+# If it can't be downloaded
+load_failed = "Couldn't load the word list. Try reloading the page."
+# Before anything's typed
+empty = "Type a word or phrase."
+# While searching; {n} is how many words per anagram it's on, {found} how many it's found so far
+searching = "Looking for {n}-word anagrams… {found} so far"
+searching_one = "Looking for one-word anagrams… {found} so far"
+# When the search finishes; {found} is the count
+done = "{found} anagrams."
+done_one = "1 anagram."
+none = "No anagrams with these settings."
+# When it reaches the most it will show; {found} is that number
+capped = "Showing the first {found}. Use fewer words, longer words or a word to include to narrow it down."
+# When you press Stop
+stopped = "Stopped at {found}."
+# When the must-include words use letters the phrase doesn't have; {words} is what was typed there
+no_fit = "The phrase doesn't have the letters for “{words}”."
+
+[results]
+# Heading over each group of results; {n} is the number of words
+words = "{n} words"
+one_word = "1 word"
+
+[about]
+# Heading of the explanation at the bottom
+heading = "About"
+# The explanation
+body = """
+A port of [a C++ anagram finder](https://github.com/wharrison2/anagrams) I wrote. It keeps the words whose letters fit inside your phrase, groups the ones made of the same letters, then searches for groups that add up to exactly your letters, longest words first. Each group can be any of its words, so one combination of letters can give many anagrams.
+
+The dictionary has about 95,000 English words, including plenty of obscure ones, with rude words taken out.
+"""

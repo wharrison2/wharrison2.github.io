@@ -1,0 +1,29 @@
+# Text for the alignment game (alignment-game/). After editing, run: python3 tools/build_content.py
+# In page text, *italic*, **bold**, `code` and [link](url) work.
+# The game's own text (buttons, panels, tips) is in site/alignment-game/play/js/strings.js, not here.
+
+[page]
+# Browser tab title
+title = "Alignment game"
+# Big heading at the top
+heading = "Alignment game"
+# Line under the heading
+intro = "Run an AI lab racing rivals to the frontier: train models, ship them, fund safety work and lobby on policy, while the misalignment you can't see piles up. This is a draft, running entirely in your browser. The full version, also a draft, is at [alignmentgame.net](https://alignmentgame.net)."
+# Link above the game that opens it in its own tab, full window
+open_full = "Open full window"
+# Read aloud by screen readers for the game's frame
+frame_label = "The game"
+
+[about]
+# Heading of the section under the game
+heading = "About"
+# The text under it. Blank lines make new paragraphs.
+body = """
+The game is an argument, made through mechanics, that AI alignment isn't necessarily easy. Misalignment is the default outcome of ordinary training, and the dangerous kinds get harder to see as models get more capable. The fixes that work early turn cosmetic later. Going slow hands the frontier to a less careful rival, which is why regulation matters.
+
+Each turn is a quarter of a year. Rival labs play by their own strategies, and when the game ends a post-mortem shows what was really going on inside your models and which of your decisions caused what.
+
+The engine is plain Python, running here in [Pyodide](https://pyodide.org) (Python compiled to WebAssembly), so the first load takes a few seconds. Multiplayer needs a server, so it's left out of this copy.
+
+[Code on GitHub](https://github.com/wharrison2/alignment_game)
+"""

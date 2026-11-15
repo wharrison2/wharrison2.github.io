@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="../shared/clip.svg">
+  <script src="../shared/flags.js"></script>
+  <script src="../shared/tool-head.js"></script>
+  <link rel="stylesheet" href="../shared/shared.css">
+  <link rel="stylesheet" href="../shared/tools.css">
+  <link rel="stylesheet" href="blocks.css">
+  <script src="../shared/look.js"></script>
+  <script type="module" src="../shared/mode.js"></script>
+  <script type="module" src="blocks.js"></script>
+  <title data-t="page.title">Block Blast solver</title>
+</head>
+<body>
+  <div class="page">
+    <header class="bar">
+      <a class="home" data-home href="../"><span data-t="site.first_name">William</span> <span data-t="site.last_name">Harrison</span></a>
+      <nav>
+        <a href="../markov/" data-t="nav.markov">Markov</a>
+        <a href="../transcription/" data-t="nav.transcription">Transcription</a>
+      </nav>
+    </header>
+
+    <main>
+      <h1 data-t="page.heading">Block Blast solver</h1>
+      <p class="sub" data-t="page.intro">Copy your board and the three pieces you were dealt, and it works out where to put them: every order, every spot, and the one that clears the most.</p>
+
+      <div class="solver">
+        <section class="board-side">
+          <h2 data-t="board.heading">Your board</h2>
+          <p class="hint" data-t="board.hint">Click or drag to fill the squares that are taken.</p>
+          <div class="grid board" id="board" role="group" aria-label="Board" data-t-aria-label="board.label"></div>
+          <button type="button" class="btn quiet" id="clear-board" data-t="board.clear">Clear board</button>
+        </section>
+
+        <section class="pieces-side">
+          <h2 data-t="pieces.heading">Your pieces</h2>
+          <p class="hint" data-t="pieces.hint">Draw each piece in a box, or pick it from the shapes below.</p>
+          <div class="slots" id="slots"></div>
+          <div class="palette" id="palette" role="group" aria-label="Shapes" data-t-aria-label="pieces.palette"></div>
+        </section>
+      </div>
+
+      <section class="result" aria-live="polite">
+        <h2 data-t="result.heading">Best moves</h2>
+        <p class="status" id="status"></p>
+        <ol class="steps" id="steps"></ol>
+        <button type="button" class="btn" id="play" hidden data-t="result.play">Play these moves</button>
+      </section>
+
+      <section class="about">
+        <h2 data-t="about.heading">How it picks</h2>
+        <div data-t="about.body">
+          <p>It tries the pieces in every order and every spot, clearing full rows and columns after each one, just as the game does. The best sequence is the one that takes the most squares off the board. On a tie, it picks the board with the least edge between filled and empty squares, so what's left is in solid blocks rather than scattered holes that new pieces can't fill.</p>
+          <p><a href="https://github.com/wharrison2/block_blast_solver">Code on GitHub</a></p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="bottom">
+      <a href="https://github.com/wharrison2" data-t="footer.github">GitHub</a>
+      <button type="button" data-mode-toggle></button>
+    </footer>
+  </div>
+</body>
+</html>

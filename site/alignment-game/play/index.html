@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="../../shared/clip.svg">
+<title data-i18n="app.title">Alignment game</title>
+<style>
+  :root{
+    /* Light editorial theme: warm off-white paper, ink text, hairline rules.
+       Accent/warn/bad are darkened to read as AA-legible on the pale surfaces. */
+    --bg:#f6f1e1; --panel:#fdfbf2; --panel2:#f0e9d7; --line:#dfd6bf;
+    --txt:#1f2328; --dim:#6a6150; --acc:#40638e; --warn:#956207; --bad:#b3261e;
+    /* Serif body stack — system serifs only, no web-font fetch (server is offline). */
+    --serif:Georgia,"Iberian","Times New Roman",Cambria,"Liberation Serif",serif;
+    --field:#ffffff; --on-acc:#ffffff; --good:#1a7a3f; --warn-bg:#fbf3e0; --bad-bg:#fcebe9;
+    color-scheme:light;
+  }
+  /* Dark version, for visitors whose system is set to dark (like the rest of the site): warm dark paper. */
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#1a1915; --panel:#22211c; --panel2:#2c2a24; --line:#3b382f;
+      --txt:#e9e4d6; --dim:#a69d89; --acc:#8fb4dc; --warn:#dcaa4c; --bad:#ef8077;
+      --field:#15140f; --on-acc:#10161d; --good:#73c493; --warn-bg:#2f2717; --bad-bg:#33201d;
+      color-scheme:dark;
+    }
+  }
+  #boot{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+        background:var(--bg);color:var(--dim);z-index:100;font-size:16px;padding:20px;text-align:center}
+  *{box-sizing:border-box}
+  /* Full-viewport flex column: top bar, nav, scrolling content, then the action
+     bar as the LAST item — so the content area fills the space between them with
+     no magic-number height math, and the action bar always sits at the bottom. */
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 var(--serif);
+       display:flex;flex-direction:column;overflow:hidden}
+  h3{margin:0 0 8px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+     color:var(--dim);font-weight:700}
+  button{background:var(--panel2);color:var(--txt);border:1px solid var(--line);
+         border-radius:3px;padding:4px 10px;cursor:pointer;font:inherit}
+  button:hover{border-color:var(--acc)}
+  button.primary{background:var(--acc);color:var(--on-acc);font-weight:700;border-color:var(--acc)}
+  button.sel{outline:2px solid var(--acc)}
+  input,select{background:var(--field);color:var(--txt);border:1px solid var(--line);
+               border-radius:3px;padding:3px 6px;font:inherit}
+  input[type=number]{width:90px}
+  #topbar{flex:0 0 auto;display:flex;flex-wrap:wrap;gap:14px;align-items:center;
+          padding:8px 14px;background:var(--panel);border-bottom:1px solid var(--line);
+          z-index:5}
+  .chip b{color:var(--acc)}
+  #nav{flex:0 0 auto;display:flex;gap:4px;align-items:center;padding:6px 14px;
+       background:var(--panel);border-bottom:1px solid var(--line);z-index:4}
+  #nav button{border-radius:5px 5px 0 0;padding:6px 16px;letter-spacing:.04em}
+  #nav button.active{background:var(--acc);color:var(--on-acc);font-weight:700;border-color:var(--acc)}
+  /* the content area fills the remaining height and scrolls internally */
+  #views{flex:1 1 auto;min-height:0;overflow-y:auto;padding:10px}
+  .view{display:none}
+  .view.active{display:block}
+  .cols2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .cols3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .cols4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;
+         padding:10px;margin-bottom:10px}
+  /* ── Viewport-filling layout convention (UI_ISSUES issue 3) ────────────────
+     GOAL: every tab behaves like the Market tab — the page (#views) never grows
+     past the viewport; only inner regions scroll. The market & governance views
+     hand-roll this; these classes generalize it so the remaining views reuse one
+     convention instead of five per-view hacks.
+
+     How to use it on a view:
+       1. Tag the <section class="view view-fill" …> so the ACTIVE view fills the
+          content area (height:100%) instead of growing with its content.
+       2. Make the view's ROOT container a height-filling grid/flex: add
+          `.fill` to a `.cols2/3/4` (it becomes height:100% with min-height:0
+          tracks) or use `.view-col` for a vertical stack (e.g. a row of lists
+          above a "completed" panel).
+       3. Give panels inside a fill grid the `.panel-fill` class: it zeroes the
+          `.panel{margin-bottom:10px}` (which fights track sizing — it broke the
+          market layout once), sets min-height:0 so the panel can shrink, and
+          makes the panel a flex column with its heading pinned.
+       4. The panel's long inner region gets `.scroll-body`: it takes the slack
+          and scrolls INTERNALLY, exactly like #log / #governance.
+     The page stays put; overflow lives inside the panels. */
+  .view.view-fill.active{display:flex;flex-direction:column;height:100%}
+  /* the market view predates the .view-fill convention and fills the content area
+     via its own .market grid (height:100%); keep its height hook unchanged */
+  .view[data-view="market"]{height:100%}
+  /* fill variants of the column grids: stretch to the view height; minmax(0,…)
+     so columns can shrink and their panels scroll rather than overflow the page */
+  .cols2.fill,.cols3.fill,.cols4.fill{flex:1 1 auto;min-height:0;height:100%}
+  .cols2.fill{grid-template-rows:minmax(0,1fr)}
+  .cols3.fill{grid-template-rows:minmax(0,1fr)}
+  .cols4.fill{grid-template-rows:minmax(0,1fr)}
+  /* a vertical stack that fills the view (a fill grid/row, then shorter panels) */
+  .view-col{display:flex;flex-direction:column;gap:10px;flex:1 1 auto;min-height:0;height:100%}
+  /* a panel living inside a fill container: no bottom margin (the grid/flex gap
+     owns spacing), can shrink, heading stays put while the body scrolls */
+  .panel-fill{margin-bottom:0;min-height:0;display:flex;flex-direction:column}
+  /* the scrolling body of a fill panel — takes the slack, scrolls internally */
+  .scroll-body{flex:1 1 auto;min-height:0;overflow-y:auto}
+  /* The market-cap graph is kept as a DELIBERATE dark "chart panel" on the light
+     page — a finance/terminal convention that reads as credible, and the saturated
+     lab line colors (core.js COLORS) sit better on dark than on pale paper. */
+  /* graph fills with the page background (not a dark panel) in a SQUARE box;
+     flexes to fill its panel so the column can stretch to the screen bottom */
+  #capgraph-big{display:block;width:100%;flex:1 1 auto;min-height:0;background:var(--bg);
+    border:1px solid var(--line);border-radius:0}
+  /* market-cap graph internals (built in views.drawCaps). Lines/tickers thicken
+     on hover; ticker text is forced sans-serif so the later serif skin leaves it. */
+  #capgraph-big .cap-line{fill:none;stroke-width:1.4;cursor:pointer;
+    transition:stroke-width .08s ease}
+  #capgraph-big .cap-line.cap-line-player{stroke-width:2.4}
+  #capgraph-big .cap-line.cap-hover{stroke-width:3.6}
+  #capgraph-big .cap-tab{cursor:pointer;transition:transform .08s ease}
+  #capgraph-big .cap-tab-shape{cursor:pointer}
+  /* tickers are explicitly sans-serif (FIX_ITEMS: "ticker capitalized and sans
+     serif") and pinned to this stack so the serif body skin can't override them */
+  #capgraph-big .cap-tab-text{font-family:"Helvetica Neue",Arial,system-ui,sans-serif;
+    font-size:11px;font-weight:700;fill:#06121c;pointer-events:none;
+    text-transform:uppercase}
+  #capgraph-big .cap-axis-text{font-family:"SF Mono",Menlo,Consolas,monospace;
+    font-size:11px;fill:var(--dim)}
+  #capgraph-big .cap-gridline{stroke:var(--line);stroke-width:1}
+  .row{display:flex;gap:6px;align-items:center;margin:3px 0;flex-wrap:wrap}
+  .dim{color:var(--dim)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+  .good{color:var(--good)}
+  table{border-collapse:collapse;width:100%}
+  td,th{padding:2px 6px;text-align:left;border-bottom:1px solid var(--line);
+        font-size:12px}
+  /* ── Market page: ONE grid owns the whole layout ──────────────────────────
+     The feed spans the full height on the left; the chart (top) and the
+     market-info panel (bottom) stack on the right. Spacing comes from the grid
+     `gap` only — the three panels' own margins are zeroed so they don't fight
+     the track sizing. minmax(0,…) tracks let panels shrink and scroll instead
+     of overflowing. Because the feed's "feed" area and the info's "info" area
+     both terminate on the grid's bottom edge, their bottoms are always level. */
+  .market{display:grid;height:100%;min-height:380px;gap:10px;
+          grid-template-columns:320px minmax(0,1fr);
+          grid-template-rows:minmax(0,2fr) minmax(0,1fr);
+          grid-template-areas:"feed chart" "feed info"}
+  .market>.panel{margin:0;min-height:0;min-width:0;
+                 display:flex;flex-direction:column}
+  .market-feed{grid-area:feed}
+  .market-chart{grid-area:chart}
+  .market-info{grid-area:info}
+  /* finance snapshot (market cap / ARR / P/E / YoY); cards stretch to fill */
+  .capmetrics{flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,1fr);
+              grid-auto-rows:1fr;gap:8px}
+  .capmetrics .metric{background:var(--panel2);border:1px solid var(--line);
+                      border-radius:5px;padding:8px 10px;display:flex;
+                      flex-direction:column;justify-content:center}
+  .capmetrics .metric-label{font-size:10px;text-transform:uppercase;
+                            letter-spacing:.05em;color:var(--dim)}
+  .capmetrics .metric-value{font-size:22px;font-weight:700;margin-top:4px}
+  #log{overflow-y:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:6px}
+  /* each feed entry is its own box with a TYPE label separate from the message */
+  .feed-item{background:var(--panel2);border:1px solid var(--line);border-radius:5px;
+             border-left:3px solid var(--line);padding:6px 8px}
+  .feed-item.feed-finding,.feed-item.feed-intervention{border-left-color:var(--good)}
+  .feed-item.feed-tip{border-left-color:var(--warn)}
+  .feed-item.feed-event{border-left-color:var(--bad)}
+  .feed-item.feed-news{border-left-color:var(--acc)}
+  .feed-head{display:flex;align-items:baseline;justify-content:space-between;gap:6px;
+             margin-bottom:3px}
+  .feed-label{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+              padding:1px 6px;border-radius:3px;background:var(--panel);
+              border:1px solid var(--line)}
+  .feed-turn{font-size:10px}
+  .feed-text{font-size:12px;line-height:1.4}
+  /* Narrow screens: stack the three panels in one column (chart, info, feed). */
+  @media(max-width:760px){
+    .market{height:auto;grid-template-columns:1fr;
+            grid-template-rows:auto auto auto;
+            grid-template-areas:"chart" "info" "feed"}
+    .market-chart{height:46vh}
+    .market-feed{height:46vh}
+    .capmetrics{grid-template-columns:repeat(2,1fr);grid-auto-rows:auto}}
+  .bar{height:10px;background:var(--panel2);border:1px solid var(--line);
+       border-radius:5px;overflow:hidden;flex:1}
+  .bar i{display:block;height:100%}
+  /* the per-turn action bar is the LAST flex item in the body column, so it
+     always sits across the bottom of the viewport (no fixed positioning) */
+  #queue{flex:0 0 auto;background:var(--panel);
+         border-top:1px solid var(--line);padding:8px 14px;display:flex;
+         gap:10px;align-items:center;flex-wrap:wrap;z-index:5}
+  #queue .item{background:var(--panel2);border:1px solid var(--line);
+               border-radius:4px;padding:2px 8px}
+  #queue .item button{padding:0 5px;margin-left:5px;border:none;color:var(--bad)}
+  #errors{color:var(--bad);white-space:pre-wrap}
+  #overlay{position:fixed;inset:0;background:rgba(31,35,40,.55);display:none;
+           overflow-y:auto;padding:30px;z-index:20}
+  #overlay.show{display:block}
+  #overlay .inner{max-width:900px;margin:0 auto}
+  /* post-mortem canvas keeps the dark chart-panel treatment (see #capgraph-big) */
+  canvas{width:100%;height:140px;background:#11161c;border:1px solid var(--line);border-radius:4px}
+  .lg{display:inline-block;width:10px;height:10px;border-radius:2px;
+      margin-right:4px;vertical-align:middle}
+  details summary{cursor:pointer;color:var(--dim)}
+  .findings div{padding:3px 0;border-bottom:1px dotted var(--line)}
+  .tag{font-size:10px;padding:0 5px;border-radius:3px;background:var(--panel2);
+       border:1px solid var(--line);color:var(--dim)}
+  .bench{background:var(--panel2);border:1px solid var(--line);border-radius:6px;
+         padding:10px;display:flex;flex-direction:column;gap:6px}
+  .bench .head{display:flex;align-items:baseline;gap:6px;justify-content:space-between}
+  .bench .name{font-weight:700;letter-spacing:.03em}
+  .bench .blurb{color:var(--dim);font-size:11px;line-height:1.35}
+  .bench .gauge{display:flex;align-items:center;gap:10px}
+  .bench .headline{font-size:20px;font-weight:700;color:var(--acc)}
+  .bench .scores{font-size:11px}
+  .bench .scores .me b{color:var(--acc)}
+  .ring text{font:700 13px monospace;fill:var(--txt)}
+  .acc{color:var(--acc)}
+  /* ── labeled-row "definition list" (UI_ISSUES issue 4) ──────────────────────
+     A reusable LABEL : VALUE row so a few "plain text in a box" renderers (worry
+     bar status, pretrain controls) read as structured fields instead of prose.
+     The label column is fixed width so values left-align into a tidy column. */
+  .kv{display:flex;align-items:baseline;gap:8px;margin:3px 0}
+  .kv .kv-label{flex:0 0 96px;font-size:10px;text-transform:uppercase;
+                letter-spacing:.05em;color:var(--dim)}
+  .kv .kv-value{flex:1 1 auto;min-width:0;font-size:13px}
+  /* ── rivals list (issue 4): one card per rival, fields in aligned columns ──
+     Imitates the .bench card; the field grid keeps ticker/name/cap/releases/
+     frontier vertically aligned across cards so the race reads at a glance. */
+  .rival-card{background:var(--panel2);border:1px solid var(--line);border-radius:6px;
+              padding:8px 10px;margin:6px 0;display:flex;flex-direction:column;gap:6px}
+  .rival-card .rc-head{display:flex;align-items:baseline;gap:6px}
+  .rival-card .rc-ticker{font-size:10px;font-weight:700;letter-spacing:.04em;
+                         padding:1px 6px;border-radius:3px;background:var(--panel);
+                         border:1px solid var(--line);text-transform:uppercase}
+  .rival-card .rc-name{font-weight:700;letter-spacing:.02em}
+  .rival-card .rc-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 10px}
+  .rival-card .rc-field{display:flex;flex-direction:column}
+  .rival-card .rc-field .rc-flabel{font-size:9px;text-transform:uppercase;
+                                   letter-spacing:.05em;color:var(--dim)}
+  .rival-card .rc-field .rc-fvalue{font-size:13px;font-variant-numeric:tabular-nums}
+  .rival-card .rc-disclosure summary{font-size:9px;text-transform:uppercase;
+                                     letter-spacing:.05em;color:var(--dim);cursor:pointer}
+  .rival-card .rc-disclosed-model{margin:4px 0 0;padding-top:4px;
+                                  border-top:1px solid var(--line);font-size:11px}
+  .rival-card .rc-disclosure-withheld{font-size:10px;color:var(--warn);
+                                      font-style:italic}
+  #itemmodal{position:fixed;inset:0;background:rgba(31,35,40,.45);display:none;
+             align-items:center;justify-content:center;padding:24px;z-index:30}
+  #itemmodal.show{display:flex}
+  .modal-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+              padding:16px 18px;max-width:540px;width:100%;max-height:86vh;overflow-y:auto;
+              box-shadow:0 8px 28px rgba(31,35,40,.18)}
+  .warn-item{border-left:3px solid var(--warn);background:var(--warn-bg);border-radius:0 5px 5px 0;
+             padding:8px 10px;margin:8px 0}
+  .warn-item.warn-emph{border-left-color:var(--bad);background:var(--bad-bg)}
+  .warn-line{color:var(--warn);font-weight:700}
+  .warn-emph .warn-line{color:var(--bad)}
+  /* ── research-item state-machine cards (views/research.js) ── */
+  .ritem{background:var(--panel2);border:1px solid var(--line);border-radius:6px;
+         padding:8px 10px;margin:6px 0;display:flex;flex-direction:column;gap:4px}
+  .ritem.clickable{cursor:pointer}
+  .ritem.clickable:hover{border-color:var(--acc)}
+  .ritem.completed{opacity:.78;border-left:3px solid var(--good)}
+  .ritem.in-progress{border-left:3px solid var(--acc)}
+  .ritem .ri-head{display:flex;align-items:baseline;gap:6px;justify-content:space-between}
+  .ritem .ri-name{font-weight:700;letter-spacing:.02em}
+  .ritem .ri-meta{color:var(--dim);font-size:11px}
+  .ritem .ri-desc{color:var(--dim);font-size:11px;line-height:1.35}
+  .ritem .ri-assist-row{display:flex;align-items:center;gap:5px}
+  /* ── governance policy items (views.renderGovernance) ──
+     UI_ISSUES issues 4/5/8. The governance VIEW fills the content area like the
+     market view; the policies list scrolls INTERNALLY while the safe-harbor row
+     stays pinned beneath it. Each policy item is a 2-column grid: LEFT holds the
+     policy name + stage tag + compact controls; RIGHT holds the rival-spends box.
+     The verbose `effect` mechanism text moved OFF the item onto a details modal
+     (openPolicyModal), so the inline item shows only a short neutral descriptor. */
+  .view[data-view="governance"]{height:100%}
+  .gov-panel{height:100%;display:flex;flex-direction:column;margin-bottom:0}
+  /* the policies list takes the slack and scrolls; safe-harbor row stays visible */
+  #governance{flex:1 1 auto;min-height:0;overflow-y:auto;margin:4px 0}
+  .gov-safeharbor{flex:0 0 auto;border-top:1px solid var(--line);padding-top:8px}
+  .policy{background:var(--panel2);border:1px solid var(--line);border-radius:6px;
+          padding:8px 10px;margin:6px 0;
+          display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:10px;align-items:start}
+  .policy-main{min-width:0}
+  /* Header: name on the left, stage tag flush to the RIGHT edge (issue 5). */
+  .policy-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+  .policy-name{font-weight:700;letter-spacing:.02em;cursor:pointer}
+  .policy-name:hover{color:var(--acc)}
+  .policy-stage{display:flex;gap:5px;align-items:baseline;flex-shrink:0}
+  /* short neutral category/stage descriptor + a "details ▸" affordance (issue 8) */
+  .policy-category{color:var(--dim);font-size:11px;margin:1px 0 4px}
+  .policy-details-link{cursor:pointer;color:var(--acc);font-size:11px}
+  .policy-details-link:hover{text-decoration:underline}
+  /* compact controls: one tight inline group now the explanatory text is gone */
+  .policy-controls{display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+                   font-size:11px;margin-top:2px}
+  .policy-controls input[type=number]{width:74px}
+  /* rival-spends box on the RIGHT — structured list, one row per rival (issue 5) */
+  .rival-spends{background:var(--panel);border:1px solid var(--line);border-radius:5px;
+                padding:6px 8px;font-size:11px;min-width:0}
+  .rival-spends .rs-head{font-size:9px;text-transform:uppercase;letter-spacing:.05em;
+                         color:var(--dim);margin-bottom:4px}
+  .rival-spends .rs-row{display:flex;align-items:baseline;gap:5px;margin:2px 0}
+  .rival-spends .rs-ticker{font-weight:700}
+  .rival-spends .rs-stance{color:var(--dim)}
+  .rival-spends .rs-spend{margin-left:auto;font-variant-numeric:tabular-nums}
+  .rival-spends .rs-empty{color:var(--dim);font-style:italic}
+  /* stage tag colours — scan the aligned column at a glance */
+  .stage-dormant{background:var(--panel);color:var(--dim);border-color:var(--line)}
+  .stage-introduced,.stage-passed,.stage-signed{color:var(--warn);border-color:var(--warn)}
+  .stage-active{color:var(--good);border-color:var(--good)}
+  /* Narrow screens: drop the rival box below the policy controls. */
+  @media(max-width:760px){ .policy{grid-template-columns:1fr} }
+  /* ── Intel alignment-evidence dossier (views.renderAlignmentEvidence) ──────
+     Findings compiled per model. Each model is a header over its evidence items;
+     an external incident rings red, a null result fades (it rules little out). */
+  .ev-group{margin-bottom:10px}
+  .ev-model-head{display:flex;align-items:baseline;gap:6px;margin:6px 0 4px;
+    padding-bottom:3px;border-bottom:1px solid var(--line)}
+  .ev-model-id{font-weight:700;letter-spacing:.02em}
+  .ev-item{background:var(--panel2);border:1px solid var(--line);border-radius:5px;
+    border-left:3px solid var(--acc);padding:6px 8px;margin:5px 0}
+  .ev-item.ev-external{border-left-color:var(--bad)}
+  /* a null result is genuine (ambiguous) evidence, not absent — keep it fully
+     legible, just mark it with a neutral grey rail instead of the accent rail */
+  .ev-item.ev-null{border-left-color:var(--dim)}
+  .ev-item-head{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
+  .ev-axis{font-weight:700;text-transform:capitalize;font-size:12px}
+  .ev-turn{font-size:10px}
+  .ev-badges{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0}
+  .ev-text{font-size:12px;line-height:1.4;color:var(--dim)}
+  /* ── Tutorial coach box (js/tutorial.js) ───────────────────────────────────
+     An optional guided walkthrough. The box floats at the bottom-right, ABOVE
+     the action bar (#queue is ~40px tall) and below the new-game overlay, so it
+     never covers the tab it is talking about. The directional ring (.tut-highlight)
+     pulses around whichever nav target the current step points at. */
+  #tutorial-coach{position:fixed;right:18px;bottom:64px;width:340px;
+    max-width:calc(100vw - 36px);background:var(--panel);border:1px solid var(--acc);
+    border-radius:8px;box-shadow:0 8px 28px rgba(31,35,40,.22);padding:14px 16px;
+    z-index:18;display:none}
+  #tutorial-coach.show{display:block}
+  #tutorial-coach .tut-step{font-size:10px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--dim);margin-bottom:4px}
+  #tutorial-coach h3{color:var(--acc);margin-bottom:6px}
+  #tutorial-coach .tut-body{font-size:13px;line-height:1.5;margin:6px 0 12px}
+  #tutorial-coach .tut-controls{display:flex;gap:8px;align-items:center}
+  #tutorial-coach .tut-controls .tut-skip{margin-left:auto;color:var(--dim);
+    font-size:12px;background:none;border:none}
+  #tutorial-coach .tut-controls .tut-skip:hover{color:var(--acc)}
+  /* the pulsing ring that points the player at the step's nav target / action bar */
+  .tut-highlight{outline:3px solid var(--acc);outline-offset:2px;border-radius:5px;
+    animation:tut-pulse 1.2s ease-in-out infinite}
+  @keyframes tut-pulse{0%,100%{outline-color:var(--acc)}50%{outline-color:transparent}}
+</style>
+</head>
+<body>
+<div id="boot" role="status">Loading the game engine (Python in your browser, a few seconds the first time)…</div>
+
+<div id="topbar">
+  <span class="chip">turn <b id="t-turn">–</b> · <b id="t-year">–</b></span>
+  <span class="chip">cash <b id="t-cash">–</b></span>
+  <span class="chip">rev <b id="t-rev">–</b>/yr</span>
+  <span class="chip">invest <b id="t-inv">–</b>/yr</span>
+  <span class="chip">budget free <b id="t-budget">–</b></span>
+  <span class="chip">approval <b id="t-appr">–</b></span>
+  <span class="chip">reg. chatter <b id="t-chatter">–</b></span>
+  <span class="chip dim" id="t-policies"></span>
+  <!-- multiplayer turn-timer countdown; hidden solo / when no timer is set -->
+  <span class="chip warn" id="mp-chip" style="display:none"></span>
+</div>
+
+<!-- multiplayer barrier status (submitted x/y + per-seat readiness); hidden solo -->
+<div id="mp-banner" style="display:none;padding:4px 10px"></div>
+
+<div id="nav">
+  <button data-view="market" class="active" onclick="switchView('market')" data-i18n="nav.market">Market</button>
+  <button data-view="lab" onclick="switchView('lab')" data-i18n="nav.lab">Lab</button>
+  <button data-view="benchmarks" onclick="switchView('benchmarks')" data-i18n="nav.benchmarks">Benchmarks</button>
+  <button data-view="research" onclick="switchView('research')" data-i18n="nav.research">Research</button>
+  <button data-view="governance" onclick="switchView('governance')" data-i18n="nav.governance">Governance</button>
+  <button data-view="intel" onclick="switchView('intel')" data-i18n="nav.intel">Intel</button>
+  <button data-view="truth" onclick="switchView('truth')" data-i18n="nav.truth">Truth</button>
+  <span style="flex:1"></span>
+  <button onclick="showNewGame()" data-i18n="nav.newGame">new game</button>
+</div>
+
+<div id="views">
+
+  <!-- ── MARKET (home): the big legible anchor + the newsfeed ── -->
+  <section class="view active" data-view="market">
+    <div class="market">
+      <div class="panel market-feed">
+        <h3 data-i18n="panel.market.feed.heading">Feed — findings · tips · events · news</h3>
+        <div id="log"></div>
+      </div>
+      <div class="panel market-chart">
+        <h3 data-i18n="panel.market.caps.heading">Market caps</h3>
+        <svg id="capgraph-big" preserveAspectRatio="none"></svg>
+        <div id="caplegend" style="margin-top:8px"></div>
+      </div>
+      <div class="panel market-info">
+        <h3 data-i18n="panel.market.info.heading">Market information</h3>
+        <div id="capmetrics" class="capmetrics"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── LAB: training / pretrain / releases ── -->
+  <section class="view view-fill" data-view="lab">
+    <div class="cols2 fill">
+      <!-- left column: SHAPE the model in training — post-train controls + the
+           fine-tuning safety interventions that act on it, each scrolls if tall -->
+      <div class="view-col">
+        <div class="panel panel-fill" id="training-panel">
+          <h3 data-i18n="panel.lab.training.heading">Model in training</h3><div id="training" class="scroll-body"></div>
+        </div>
+        <div class="panel panel-fill"><h3 data-i18n="panel.lab.interventions.heading">Safety interventions — fine-tuning</h3>
+          <div id="safety-interventions" class="scroll-body"></div></div>
+      </div>
+      <!-- right column: BUILD &amp; SHIP — start a pretrain, see the frozen catalog -->
+      <div class="view-col">
+        <div class="panel panel-fill"><h3 data-i18n="panel.lab.pretrain.heading">Pretrain run</h3>
+          <div id="pretrain" class="scroll-body"></div></div>
+        <div class="panel panel-fill"><h3 data-i18n="panel.lab.released.heading">Released models (frozen · permanent attack surface)</h3>
+          <div id="released" class="scroll-body"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── BENCHMARKS: §7 public scoreboard (you + rivals) ── -->
+  <section class="view view-fill" data-view="benchmarks">
+    <div class="panel panel-fill">
+      <h3 data-i18n="panel.benchmarks.heading">Public benchmarks — the shared scoreboard</h3>
+      <div class="dim" style="margin-bottom:6px" data-i18n-html="panel.benchmarks.blurb">Public &amp; passive: everyone sees
+        every lab's scores, read off <b>measured</b> capability — so a sandbagging
+        model looks clean here. Released free by the world; old benchmarks saturate
+        as the frontier passes them. Chasing these for investors is the Goodhart trap.</div>
+      <!-- the benchmark-card grid scrolls inside the panel; heading + blurb stay put -->
+      <div class="scroll-body"><div id="benchmarks" class="cols3"></div></div>
+    </div>
+  </section>
+
+  <!-- ── RESEARCH: capability / safety evals / safety advances / in-progress ── -->
+  <section class="view view-fill" data-view="research">
+    <div class="view-col">
+      <!-- the four research lists fill the slack; each column scrolls internally -->
+      <div class="cols4 fill">
+        <div class="panel panel-fill"><h3 data-i18n="panel.research.capability.heading">Capability research</h3>
+          <div id="cap-projects" class="scroll-body"></div></div>
+        <div class="panel panel-fill"><h3 data-i18n="panel.research.safetyEvals.heading">Safety evaluations</h3>
+          <div id="safety-projects" class="scroll-body"></div></div>
+        <div class="panel panel-fill"><h3 data-i18n="panel.research.safetyAdvances.heading">Safety advances — training</h3>
+          <div id="safety-advances" class="scroll-body"></div></div>
+        <div class="panel panel-fill"><h3 data-i18n="panel.research.inProgress.heading">In progress</h3>
+          <div id="inprogress" class="scroll-body"></div></div>
+      </div>
+      <!-- completed advances sit beneath the lists; capped height, scroll internally -->
+      <div class="panel panel-fill" style="flex:0 1 30%">
+        <h3 data-i18n="panel.research.completed.heading">Completed advances</h3>
+        <div id="completed-advances" class="scroll-body"></div></div>
+    </div>
+  </section>
+
+  <!-- ── GOVERNANCE: lobby / litigate / defect (full-height; list scrolls) ── -->
+  <section class="view" data-view="governance">
+    <div class="panel gov-panel">
+      <h3 data-i18n="panel.governance.heading">Policies — lobby (pre-passage) · litigate (post-passage) · defect</h3>
+      <div id="governance"></div>
+      <div class="gov-safeharbor"><label><input type="checkbox" id="safeharbor">
+        <span data-i18n="panel.governance.safeharbor.label">sign safe-harbor code (penalty shelter)</span></label></div>
+    </div>
+  </section>
+
+  <!-- ── INTEL: epistemics + rivals (the feed now lives on the Market page) ── -->
+  <section class="view view-fill" data-view="intel">
+    <div class="cols2 fill">
+      <!-- left column: the worry-bar SYNTHESIS on top (short, fixed height), then
+           the raw EVIDENCE it was synthesized from below (fills, scrolls) -->
+      <div class="view-col">
+        <div class="panel panel-fill" style="flex:0 0 auto">
+          <h3 data-i18n="panel.intel.worry.heading">Worry bar (LEVEL vs CONFIDENCE — synthesis of evidence you collected)</h3>
+          <div>
+            <div class="row"><span style="width:80px" data-i18n="worry.level.inline">level</span>
+              <div class="bar"><i id="wb-level" style="background:var(--bad)"></i></div>
+              <span id="wb-level-n"></span></div>
+            <div class="row"><span style="width:80px" data-i18n="worry.confidence.inline">confidence</span>
+              <div class="bar"><i id="wb-conf" style="background:var(--acc)"></i></div>
+              <span id="wb-conf-n"></span></div>
+            <div class="dim" id="wb-summary"></div>
+          </div>
+        </div>
+        <div class="panel panel-fill">
+          <h3 data-i18n="panel.intel.evidence.heading">Alignment evidence — what your evals &amp; incidents have surfaced</h3>
+          <div id="alignment-evidence" class="scroll-body"></div>
+        </div>
+      </div>
+      <!-- the rivals list grows with the field; scroll it inside the panel -->
+      <div class="panel panel-fill"><h3 data-i18n="panel.intel.rivals.heading">Rivals (public info only)</h3>
+        <div id="rivals" class="scroll-body"></div></div>
+    </div>
+  </section>
+
+  <!-- ── TRUTH: god's-eye true state (DEBUG — bypasses the firewall) ── -->
+  <section class="view view-fill" data-view="truth">
+    <div class="panel panel-fill">
+      <h3 data-i18n="panel.truth.heading">Truth — god's-eye true state (debug)</h3>
+      <div class="dim" style="margin-bottom:6px" data-i18n-html="panel.truth.blurb">DEV ONLY. This bypasses the
+        true-vs-measured firewall the game is built on: it shows every lab's
+        <b>true</b> alignment &amp; capability (red) beside what instruments
+        <b>measure</b> — including rivals' hidden, sandbagged danger. Expand a
+        model for its turn-by-turn true trajectory.</div>
+      <!-- the per-model truth dump is long; scroll it inside the panel -->
+      <div id="truth" class="scroll-body"></div>
+    </div>
+  </section>
+
+</div>
+
+<div id="queue">
+  <b data-i18n="actionbar.thisTurn">this turn:</b>
+  <span id="queued"></span>
+  <span style="flex:1" id="errors"></span>
+  <button class="primary" id="endturn" onclick="endTurn()" data-i18n="actionbar.endTurn">END TURN ▶</button>
+</div>
+
+<div id="overlay"><div class="inner" id="overlay-content"></div></div>
+
+<!-- §7c per-item "explain it, then carry it out" modal -->
+<div id="itemmodal"><div class="modal-card" id="modal-body"></div></div>
+
+<!-- optional guided walkthrough (js/tutorial.js); hidden until the player opts in -->
+<div id="tutorial-coach"></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

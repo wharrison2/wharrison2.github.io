@@ -20,6 +20,10 @@ PAGES = {
     "markov": ["markov/index.html"],
     "qr": ["qr/index.html"],
     "transcription": ["transcription/index.html"],
+    "game": ["alignment-game/index.html"],
+    "blockblast": ["block-blast/index.html"],
+    "anagrams": ["anagrams/index.html"],
+    "sar": ["sar-viewer/index.html"],
 }
 ALL_PAGES = sorted(str(p.relative_to(SITE)) for p in [*SITE.glob("*.html"), *SITE.glob("*/index.html")])
 

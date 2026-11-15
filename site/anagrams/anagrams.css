@@ -1,0 +1,19 @@
+/* The anagram finder: the box, its options, and the results in columns. */
+.finder { margin: 0 0 8px; }
+.phrase input { font-size: 1.15rem; padding: 12px 14px; }
+.finder .fields { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin: 14px 0 0; }
+
+.state { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 44px; margin: 10px 0 6px; }
+.state .status { margin: 0; flex: 1; font-size: 0.9rem; }
+.state .btn { padding: 8px 14px; font-size: 0.82rem; }
+
+.results h2 {
+  font: 600 0.78rem/1 var(--font-body); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);
+  margin: 26px 0 10px; padding-bottom: 8px; border-bottom: 1px solid var(--line);
+}
+.results ol { list-style: none; padding: 0; margin: 0; columns: 15em auto; column-gap: 28px; }
+.results li { break-inside: avoid; padding: 2px 0; overflow-wrap: anywhere; }
+
+.about { margin-top: 56px; max-width: 38em; }
+.about h2 { font: var(--display-weight) 1.4rem/1.2 var(--font-display); margin: 0 0 10px; }
+.about p { margin: 0 0 12px; }

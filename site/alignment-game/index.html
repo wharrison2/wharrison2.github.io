@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="../shared/clip.svg">
+  <script src="../shared/flags.js"></script>
+  <script src="../shared/tool-head.js"></script>
+  <link rel="stylesheet" href="../shared/shared.css">
+  <link rel="stylesheet" href="../shared/tools.css">
+  <link rel="stylesheet" href="game.css">
+  <script src="../shared/look.js"></script>
+  <script type="module" src="../shared/mode.js"></script>
+  <title data-t="page.title">Alignment game</title>
+</head>
+<body>
+  <div class="page">
+    <header class="bar">
+      <a class="home" data-home href="../"><span data-t="site.first_name">William</span> <span data-t="site.last_name">Harrison</span></a>
+      <nav>
+        <a href="../markov/" data-t="nav.markov">Markov</a>
+        <a href="../transcription/" data-t="nav.transcription">Transcription</a>
+      </nav>
+    </header>
+
+    <main>
+      <h1 data-t="page.heading">Alignment game</h1>
+      <p class="sub" data-t="page.intro">Run an AI lab racing rivals to the frontier: train models, ship them, fund safety work and lobby on policy, while the misalignment you can't see piles up. This is a draft, running entirely in your browser. The full version, also a draft, is at <a href="https://alignmentgame.net">alignmentgame.net</a>.</p>
+      <p class="full"><a href="play/" target="_blank" rel="noopener" data-t="page.open_full">Open full window</a></p>
+    </main>
+  </div>
+
+  <!-- The game is its own full-window app (play/), framed here wider than the page column. -->
+  <iframe class="game" src="play/" title="The game" data-t-title="page.frame_label"></iframe>
+
+  <div class="page">
+    <section class="about">
+      <h2 data-t="about.heading">About</h2>
+      <div data-t="about.body">
+        <p>The game is an argument, made through mechanics, that AI alignment isn't necessarily easy. Misalignment is the default outcome of ordinary training, and the dangerous kinds get harder to see as models get more capable. The fixes that work early turn cosmetic later. Going slow hands the frontier to a less careful rival, which is why regulation matters.</p>
+        <p>Each turn is a quarter of a year. Rival labs play by their own strategies, and when the game ends a post-mortem shows what was really going on inside your models and which of your decisions caused what.</p>
+        <p>The engine is plain Python, running here in <a href="https://pyodide.org">Pyodide</a> (Python compiled to WebAssembly), so the first load takes a few seconds. Multiplayer needs a server, so it's left out of this copy.</p>
+        <p><a href="https://github.com/wharrison2/alignment_game">Code on GitHub</a></p>
+      </div>
+    </section>
+
+    <footer class="bottom">
+      <a href="https://github.com/wharrison2" data-t="footer.github">GitHub</a>
+      <button type="button" data-mode-toggle></button>
+    </footer>
+  </div>
+</body>
+</html>
